@@ -65,6 +65,25 @@ Vertex rotateVertexY(Vertex vertex, float angle)
     return rotatedVertex;
 }
 
+sf::Vector3f calculateTriNormal(Vertex a, Vertex b, Vertex c)
+{
+    sf::Vector3f tangent = {
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z
+    };
+    sf::Vector3f bitangent = {
+        c.x - b.x,
+        c.y - b.y,
+        c.z - b.z
+    };
+    return sf::Vector3f(
+        tangent.y * bitangent.z - tangent.z * bitangent.y,
+        tangent.z * bitangent.x - tangent.x * bitangent.z,
+        tangent.x * bitangent.y - tangent.y * bitangent.x
+    );
+}
+
 int main()
 {
     auto window = sf::RenderWindow{{1280, 720}, "3d render test"};
@@ -78,13 +97,20 @@ int main()
         {-1, -1, -1},     {1, -1, -1}
     }};
 
-    std::array<int, 12 * 2> cubeDrawIndex = {0, 1, 1, 3, 0, 2, 2, 3, 4, 5, 5, 7, 4, 6, 6, 7, 0, 4, 1, 5, 2, 6, 3, 7};
+    std::array<std::array<int, 3>, 12> cubeTrisIndex = {{
+        {0, 1, 2}, {1, 3, 2}, // front
+        {5, 4, 7}, {4, 6, 7}, // back
+        {1, 5, 3}, {5, 7, 3}, // right
+        {4, 0, 6}, {0, 2, 6}, // left
+        {4, 5, 0}, {5, 1, 0}, // top
+        {2, 3, 6}, {3, 7, 6}  // bottom
+    }};
 
     srand(time(NULL));
-    std::vector<sf::Vector3f> cubePositions = {{0, 0, 0}};
-    for (int i = 0; i < 7; i++)
+    std::vector<sf::Vector3f> cubePositions = {{0, 0, -100}};
+    for (int i = 0; i < 10; i++)
     {
-        cubePositions.push_back(sf::Vector3f(rand() % 200, rand() % 200, rand() % 200));
+        cubePositions.push_back(sf::Vector3f(rand() % 400, rand() % 400, rand() % 400));
     }
 
     sf::Vector3f rotation = {0, 0, 0};
@@ -119,54 +145,64 @@ int main()
         ));
         cameraRot.y += ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::L) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::J)) * dt;
 
-        rotation.x += dt;
-        rotation.y += dt;
-        rotation.z += dt;
+        rotation.x += dt / 8.0;
+        rotation.y += dt / 3.0;
 
         window.clear();
 
         for (sf::Vector3f cubePos : cubePositions)
         {
-            // Draw cube
-            for (int i = 0; i < cubeDrawIndex.size(); i += 2)
+            // Draw cube triangles
+            for (int i = 0; i < cubeTrisIndex.size(); i++)
             {
-                Vertex vertexOne = cube[cubeDrawIndex[i]];
-                Vertex vertexTwo = cube[cubeDrawIndex[i + 1]];
+                std::array<Vertex, 3> transformedVertices;
 
-                // Rotate cube
-                // vertexOne = rotateVertex(vertexOne, rotation - cubePos);
-                // vertexTwo = rotateVertex(vertexTwo, rotation - cubePos);
+                // Transform vertices
+                for (int j = 0; j < 3; j++)
+                {
+                    Vertex transformedVertex = cube[cubeTrisIndex[i][j]];
 
-                // Scale cube
-                vertexOne = vertexOne * 30;
-                vertexTwo = vertexTwo * 30;
+                    // Rotate
+                    transformedVertex = rotateVertex(transformedVertex, rotation - cubePos);
 
-                // Move cube
-                vertexOne.x -= cameraPos.x + cubePos.x;
-                vertexOne.y -= cameraPos.y + cubePos.y;
-                vertexOne.z -= cameraPos.z + cubePos.z;
-                vertexTwo.x -= cameraPos.x + cubePos.x;
-                vertexTwo.y -= cameraPos.y + cubePos.y;
-                vertexTwo.z -= cameraPos.z + cubePos.z;
+                    // Scale
+                    transformedVertex = transformedVertex * 30;
 
-                // Rotate in camera view
-                vertexOne = rotateVertexY(vertexOne, -cameraRot.y);
-                vertexOne = rotateVertexX(vertexOne, -cameraRot.x);
-                vertexTwo = rotateVertexY(vertexTwo, -cameraRot.y);
-                vertexTwo = rotateVertexX(vertexTwo, -cameraRot.x);
+                    // Translate
+                    transformedVertex.x -= cameraPos.x + cubePos.x;
+                    transformedVertex.y -= cameraPos.y + cubePos.y;
+                    transformedVertex.z -= cameraPos.z + cubePos.z;
 
-                // Project
-                vertexOne = projectVertexToScreen(vertexOne, {1280, 720}, 3.14 / 2.0, 0.001, 1000);
-                vertexTwo = projectVertexToScreen(vertexTwo, {1280, 720}, 3.14 / 2.0, 0.001, 1000);
+                    // Rotate in camera view
+                    transformedVertex = rotateVertexY(transformedVertex, -cameraRot.y);
+                    transformedVertex = rotateVertexX(transformedVertex, -cameraRot.x);
 
-                if (vertexOne.z < -1 || vertexOne.z > 1 || vertexTwo.z < -1 || vertexTwo.z > 1)
+                    // Project
+                    transformedVertex = projectVertexToScreen(transformedVertex, {1280, 720}, 3.14 / 2.0, 0.001, 1000);
+
+                    transformedVertices[j] = transformedVertex;
+                }
+
+                // Backface culling
+                sf::Vector3f faceNormal = calculateTriNormal(transformedVertices[0], transformedVertices[1], transformedVertices[2]);
+                if (faceNormal.z > 0)
                     continue;
 
-                sf::VertexArray line(sf::LinesStrip, 2);
-                line[0].position = sf::Vector2f(vertexOne.x, vertexOne.y);
-                line[1].position = sf::Vector2f(vertexTwo.x, vertexTwo.y);
+                // Draw lines of triangle
+                for (int j = 0; j < 3; j++)
+                {
+                    Vertex vertexOne = transformedVertices[j];
+                    Vertex vertexTwo = transformedVertices[(j + 1) % 3];
 
-                window.draw(line);
+                    if (vertexOne.z < -1 || vertexOne.z > 1 || vertexTwo.z < -1 || vertexTwo.z > 1)
+                        continue;
+
+                    sf::VertexArray line(sf::LinesStrip, 2);
+                    line[0].position = sf::Vector2f(vertexOne.x, vertexOne.y);
+                    line[1].position = sf::Vector2f(vertexTwo.x, vertexTwo.y);
+
+                    window.draw(line);
+                }
             }
         }
 
