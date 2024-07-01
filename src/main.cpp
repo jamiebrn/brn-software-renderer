@@ -3,6 +3,10 @@
 #include <math.h>
 #include <iostream>
 
+#define SCREEN_WIDTH 200
+#define SCREEN_HEIGHT 150
+#define SCREEN_RENDER_SCALE 5
+
 struct Vertex {
     float x, y, z;
     inline Vertex operator*(float b)
@@ -84,9 +88,42 @@ sf::Vector3f calculateTriNormal(Vertex a, Vertex b, Vertex c)
     );
 }
 
+void clearPixelBuffer(sf::Uint8 (&pixelBuffer)[SCREEN_WIDTH * SCREEN_HEIGHT * 4])
+{
+    for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT * 4; i += 4)
+    {
+        pixelBuffer[i] = 0;
+        pixelBuffer[i + 1] = 0;
+        pixelBuffer[i + 2] = 0;
+        pixelBuffer[i + 3] = 255;
+    }
+}
+
+void drawLineToPixelBuffer(sf::Vector2u a, sf::Vector2u b, sf::Uint8 (&pixelBuffer)[SCREEN_WIDTH * SCREEN_HEIGHT * 4])
+{
+    int dx = b.x - a.x;
+    int dy = b.y - a.y;
+    int steps = std::max(abs(dx), abs(dy));
+    float xInc = (float)dx / (float)steps;
+    float yInc = (float)dy / (float)steps;
+    float x = 0, y = 0;
+    for (int i = 0; i <= steps; i++)
+    {
+        if (x < 0 || x > SCREEN_WIDTH - 1 || y < 0 || y > SCREEN_HEIGHT - 1)
+            continue;
+        // Draw pixel to buffer
+        int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH);
+        pixelBuffer[pixel] = 255;
+        pixelBuffer[pixel + 1] = 255;
+        pixelBuffer[pixel + 2] = 255;
+        x += xInc;
+        y += yInc;
+    }
+}
+
 int main()
 {
-    auto window = sf::RenderWindow{{1280, 720}, "3d render test"};
+    auto window = sf::RenderWindow{{SCREEN_WIDTH * SCREEN_RENDER_SCALE, SCREEN_HEIGHT * SCREEN_RENDER_SCALE}, "3d render test"};
     window.setFramerateLimit(165);
     sf::Clock clock;
 
@@ -117,6 +154,12 @@ int main()
 
     sf::Vector3f cameraPos = {0, 0, 0};
     sf::Vector3f cameraRot = {0, 0, 0};
+
+    // Screen stuff
+    sf::Uint8 pixelBuffer[SCREEN_WIDTH * SCREEN_HEIGHT * 4];
+    clearPixelBuffer(pixelBuffer);
+
+    sf::Image renderImage;
 
     while (window.isOpen())
     {
@@ -178,7 +221,7 @@ int main()
                     transformedVertex = rotateVertexX(transformedVertex, -cameraRot.x);
 
                     // Project
-                    transformedVertex = projectVertexToScreen(transformedVertex, {1280, 720}, 3.14 / 2.0, 0.001, 1000);
+                    transformedVertex = projectVertexToScreen(transformedVertex, {SCREEN_WIDTH * SCREEN_RENDER_SCALE, SCREEN_HEIGHT * SCREEN_RENDER_SCALE}, 3.14 / 2.0, 0.001, 1000);
 
                     transformedVertices[j] = transformedVertex;
                 }
@@ -197,14 +240,29 @@ int main()
                     if (vertexOne.z < -1 || vertexOne.z > 1 || vertexTwo.z < -1 || vertexTwo.z > 1)
                         continue;
 
+                    /*
                     sf::VertexArray line(sf::LinesStrip, 2);
                     line[0].position = sf::Vector2f(vertexOne.x, vertexOne.y);
                     line[1].position = sf::Vector2f(vertexTwo.x, vertexTwo.y);
 
                     window.draw(line);
+                    */
                 }
             }
         }
+
+        clearPixelBuffer(pixelBuffer);
+        drawLineToPixelBuffer({0, 0}, {50, 76}, pixelBuffer);
+
+        renderImage.create(SCREEN_WIDTH, SCREEN_HEIGHT, pixelBuffer);
+
+        sf::Texture texture;
+        texture.loadFromImage(renderImage);
+        sf::Sprite sprite;
+        sprite.setTexture(texture, true);
+        sprite.setScale(sf::Vector2f(SCREEN_RENDER_SCALE, SCREEN_RENDER_SCALE));
+
+        window.draw(sprite);
 
         window.display();
 
