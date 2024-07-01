@@ -103,16 +103,16 @@ void drawLineToPixelBuffer(sf::Vector2u a, sf::Vector2u b, sf::Uint8 (&pixelBuff
 {
     int dx = b.x - a.x;
     int dy = b.y - a.y;
-    int steps = std::max(abs(dx), abs(dy));
+    int steps = std::max(std::abs(dx), std::abs(dy));
     float xInc = (float)dx / (float)steps;
     float yInc = (float)dy / (float)steps;
-    float x = 0, y = 0;
+    float x = a.x, y = a.y;
     for (int i = 0; i <= steps; i++)
     {
         if (x < 0 || x > SCREEN_WIDTH - 1 || y < 0 || y > SCREEN_HEIGHT - 1)
             continue;
         // Draw pixel to buffer
-        int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH);
+        int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH * 4);
         pixelBuffer[pixel] = 255;
         pixelBuffer[pixel + 1] = 255;
         pixelBuffer[pixel + 2] = 255;
@@ -193,6 +193,8 @@ int main()
 
         window.clear();
 
+        clearPixelBuffer(pixelBuffer);
+
         for (sf::Vector3f cubePos : cubePositions)
         {
             // Draw cube triangles
@@ -221,7 +223,7 @@ int main()
                     transformedVertex = rotateVertexX(transformedVertex, -cameraRot.x);
 
                     // Project
-                    transformedVertex = projectVertexToScreen(transformedVertex, {SCREEN_WIDTH * SCREEN_RENDER_SCALE, SCREEN_HEIGHT * SCREEN_RENDER_SCALE}, 3.14 / 2.0, 0.001, 1000);
+                    transformedVertex = projectVertexToScreen(transformedVertex, {SCREEN_WIDTH, SCREEN_HEIGHT}, 3.14 / 2.0, 0.001, 1000);
 
                     transformedVertices[j] = transformedVertex;
                 }
@@ -239,6 +241,8 @@ int main()
 
                     if (vertexOne.z < -1 || vertexOne.z > 1 || vertexTwo.z < -1 || vertexTwo.z > 1)
                         continue;
+                    
+                    drawLineToPixelBuffer({(unsigned int)vertexOne.x, (unsigned int)vertexOne.y}, {(unsigned int)vertexTwo.x, (unsigned int)vertexTwo.y}, pixelBuffer);
 
                     /*
                     sf::VertexArray line(sf::LinesStrip, 2);
@@ -250,9 +254,6 @@ int main()
                 }
             }
         }
-
-        clearPixelBuffer(pixelBuffer);
-        drawLineToPixelBuffer({0, 0}, {50, 76}, pixelBuffer);
 
         renderImage.create(SCREEN_WIDTH, SCREEN_HEIGHT, pixelBuffer);
 
