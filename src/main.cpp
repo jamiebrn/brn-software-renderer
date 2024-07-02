@@ -19,6 +19,10 @@ struct Vertex {
     }
 };
 
+struct Triangle {
+    std::array<Vertex, 3> vertices;
+};
+
 Vertex projectVertexToScreen(Vertex vertex, sf::Vector2u screenSize, float fov, float near, float far)
 {
     Vertex projection;
@@ -69,17 +73,17 @@ Vertex rotateVertexY(Vertex vertex, float angle)
     return rotatedVertex;
 }
 
-sf::Vector3f calculateTriNormal(Vertex a, Vertex b, Vertex c)
+sf::Vector3f calculateTriNormal(Triangle tri)
 {
     sf::Vector3f tangent = {
-        a.x - b.x,
-        a.y - b.y,
-        a.z - b.z
+        tri.vertices[0].x - tri.vertices[1].x,
+        tri.vertices[0].y - tri.vertices[1].y,
+        tri.vertices[0].z - tri.vertices[1].z
     };
     sf::Vector3f bitangent = {
-        c.x - b.x,
-        c.y - b.y,
-        c.z - b.z
+        tri.vertices[2].x - tri.vertices[1].x,
+        tri.vertices[2].y - tri.vertices[1].y,
+        tri.vertices[2].z - tri.vertices[1].z
     };
     return sf::Vector3f(
         tangent.y * bitangent.z - tangent.z * bitangent.y,
@@ -99,7 +103,7 @@ void clearPixelBuffer(sf::Uint8 (&pixelBuffer)[SCREEN_WIDTH * SCREEN_HEIGHT * 4]
     }
 }
 
-void drawLineToPixelBuffer(sf::Vector2u a, sf::Vector2u b, sf::Uint8 (&pixelBuffer)[SCREEN_WIDTH * SCREEN_HEIGHT * 4])
+void drawLineToPixelBuffer(sf::Vector2u a, sf::Vector2u b, sf::Uint8 (&pixelBuffer)[SCREEN_WIDTH * SCREEN_HEIGHT * 4], int cr = 255, int cg = 255, int cb = 255)
 {
     int dx = b.x - a.x;
     int dy = b.y - a.y;
@@ -109,15 +113,76 @@ void drawLineToPixelBuffer(sf::Vector2u a, sf::Vector2u b, sf::Uint8 (&pixelBuff
     float x = a.x, y = a.y;
     for (int i = 0; i <= steps; i++)
     {
-        if (x < 0 || x > SCREEN_WIDTH - 1 || y < 0 || y > SCREEN_HEIGHT - 1)
-            continue;
-        // Draw pixel to buffer
-        int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH * 4);
-        pixelBuffer[pixel] = 255;
-        pixelBuffer[pixel + 1] = 255;
-        pixelBuffer[pixel + 2] = 255;
+        if (x > 0 && x < SCREEN_WIDTH - 1 && y > 0 && y < SCREEN_HEIGHT - 1)
+        {
+            // Draw pixel to buffer
+            int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH * 4);
+            pixelBuffer[pixel] = cr;
+            pixelBuffer[pixel + 1] = cg;
+            pixelBuffer[pixel + 2] = cb;
+        }
         x += xInc;
         y += yInc;
+    }
+}
+
+void drawTriangleToPixelBuffer(Triangle tri, sf::Uint8 (&pixelBuffer)[SCREEN_WIDTH * SCREEN_HEIGHT * 4], int cr = 255, int cg = 255, int cb = 255)
+{
+    // Draw lines of triangle
+    for (int i = 0; i < 3; i++)
+    {
+        Vertex vertexOne = tri.vertices[i];
+        Vertex vertexTwo = tri.vertices[(i + 1) % 3];
+
+        if (vertexOne.z < -1 || vertexOne.z > 1 || vertexTwo.z < -1 || vertexTwo.z > 1)
+            continue;
+        
+        drawLineToPixelBuffer({(unsigned int)vertexOne.x, (unsigned int)vertexOne.y}, {(unsigned int)vertexTwo.x, (unsigned int)vertexTwo.y}, pixelBuffer, cr, cg, cb);
+    }
+}
+
+bool isPointInTriangle(Triangle tri, sf::Vector2i point)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        sf::Vector2i edgeVector = {(int)tri.vertices[(i + 1) % 3].x - (int)tri.vertices[i].x, (int)tri.vertices[(i + 1) % 3].y - (int)tri.vertices[i].y};
+        sf::Vector2i pointVector = {point.x - (int)tri.vertices[i].x, point.y - (int)tri.vertices[i].y};
+
+        int crossProduct = edgeVector.x * pointVector.y - pointVector.x * edgeVector.y;
+        if (crossProduct < 0)
+            return false;
+    }
+    return true;
+}
+
+void drawFilledTriangleToPixelBuffer(Triangle tri, sf::Uint8 (&pixelBuffer)[SCREEN_WIDTH * SCREEN_HEIGHT * 4], int cr = 255, int cg = 255, int cb = 255)
+{
+    // Get area of triangle
+    int x_min = std::min(std::min((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
+    int x_max = std::max(std::max((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
+    int y_min = std::min(std::min((int)tri.vertices[0].y, (int)tri.vertices[1].y), (int)tri.vertices[2].y);
+    int y_max = std::max(std::max((int)tri.vertices[0].y, (int)tri.vertices[1].y), (int)tri.vertices[2].y);
+
+    // Draw pixels in triangle
+    for (int y = y_min; y < y_max; y++)
+    {
+        if (y < 0 || y > SCREEN_HEIGHT - 1)
+            continue;
+        for (int x = x_min; x < x_max; x++)
+        {
+            if (x < 0 || x > SCREEN_WIDTH - 1)
+                continue;
+            
+            // Test if pixel is in triangle using cross product
+            if (isPointInTriangle(tri, {x, y}))
+            {
+                // Draw pixel to buffer
+                int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH * 4);
+                pixelBuffer[pixel] = cr;
+                pixelBuffer[pixel + 1] = cg;
+                pixelBuffer[pixel + 2] = cb;
+            }
+        }
     }
 }
 
@@ -147,7 +212,7 @@ int main()
     std::vector<sf::Vector3f> cubePositions = {{0, 0, -100}};
     for (int i = 0; i < 10; i++)
     {
-        cubePositions.push_back(sf::Vector3f(rand() % 400, rand() % 400, rand() % 400));
+        // cubePositions.push_back(sf::Vector3f(rand() % 400, rand() % 400, rand() % 400));
     }
 
     sf::Vector3f rotation = {0, 0, 0};
@@ -200,7 +265,7 @@ int main()
             // Draw cube triangles
             for (int i = 0; i < cubeTrisIndex.size(); i++)
             {
-                std::array<Vertex, 3> transformedVertices;
+                Triangle transformedTriangle;
 
                 // Transform vertices
                 for (int j = 0; j < 3; j++)
@@ -225,33 +290,18 @@ int main()
                     // Project
                     transformedVertex = projectVertexToScreen(transformedVertex, {SCREEN_WIDTH, SCREEN_HEIGHT}, 3.14 / 2.0, 0.001, 1000);
 
-                    transformedVertices[j] = transformedVertex;
+                    transformedTriangle.vertices[j] = transformedVertex;
                 }
 
                 // Backface culling
-                sf::Vector3f faceNormal = calculateTriNormal(transformedVertices[0], transformedVertices[1], transformedVertices[2]);
+                sf::Vector3f faceNormal = calculateTriNormal(transformedTriangle);
                 if (faceNormal.z > 0)
                     continue;
 
-                // Draw lines of triangle
-                for (int j = 0; j < 3; j++)
-                {
-                    Vertex vertexOne = transformedVertices[j];
-                    Vertex vertexTwo = transformedVertices[(j + 1) % 3];
+                // Draw triangle
+                drawFilledTriangleToPixelBuffer(transformedTriangle, pixelBuffer);
+                drawTriangleToPixelBuffer(transformedTriangle, pixelBuffer, 100, 100, 100);
 
-                    if (vertexOne.z < -1 || vertexOne.z > 1 || vertexTwo.z < -1 || vertexTwo.z > 1)
-                        continue;
-                    
-                    drawLineToPixelBuffer({(unsigned int)vertexOne.x, (unsigned int)vertexOne.y}, {(unsigned int)vertexTwo.x, (unsigned int)vertexTwo.y}, pixelBuffer);
-
-                    /*
-                    sf::VertexArray line(sf::LinesStrip, 2);
-                    line[0].position = sf::Vector2f(vertexOne.x, vertexOne.y);
-                    line[1].position = sf::Vector2f(vertexTwo.x, vertexTwo.y);
-
-                    window.draw(line);
-                    */
-                }
             }
         }
 
