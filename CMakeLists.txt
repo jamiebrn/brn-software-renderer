@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(CMakeSFMLProject LANGUAGES CXX)
+project(BrnRenderer LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
@@ -10,6 +10,10 @@ FetchContent_Declare(SFML
     GIT_TAG 2.6.x)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(main src/main.cpp)
-target_link_libraries(main PRIVATE sfml-graphics)
-target_compile_features(main PRIVATE cxx_std_17)
+include_directories(include/)
+
+file(GLOB_RECURSE SRC_FILES src/*.cpp)
+
+add_executable(BrnRenderer ${SRC_FILES})
+target_link_libraries(BrnRenderer PRIVATE sfml-graphics)
+target_compile_features(BrnRenderer PRIVATE cxx_std_17)
