@@ -5,9 +5,9 @@
 #include <math.h>
 #include <iostream>
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
-#define SCREEN_RENDER_SCALE 1
+#define SCREEN_WIDTH 300
+#define SCREEN_HEIGHT 300
+#define SCREEN_RENDER_SCALE 3
 
 struct Vertex {
     float x, y, z, w = 1.0;
@@ -186,14 +186,23 @@ void clearPixelBuffer(std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* p
     }
 }
 
-void drawLineToPixelBuffer(sf::Vector2u a, sf::Vector2u b, std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer, int cr = 255, int cg = 255, int cb = 255)
+void clearDepthBuffer(std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>* depthBuffer)
 {
-    int dx = b.x - a.x;
-    int dy = b.y - a.y;
+    (*depthBuffer).fill(INFINITY);
+}
+
+void drawLineToPixelBuffer(Vertex a, Vertex b, std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer, int cr = 255, int cg = 255, int cb = 255)
+{
+    int dx = (unsigned int)b.x - (unsigned int)a.x;
+    int dy = (unsigned int)b.y - (unsigned int)a.y;
     int steps = std::max(std::abs(dx), std::abs(dy));
     float xInc = (float)dx / (float)steps;
     float yInc = (float)dy / (float)steps;
-    float x = a.x, y = a.y;
+    float x = (unsigned int)a.x, y = (unsigned int)a.y;
+
+    // Average depth
+    float depth = (a.w + b.w) / 2.0;
+
     for (int i = 0; i <= steps; i++)
     {
         if (x > 0 && x < SCREEN_WIDTH - 1 && y > 0 && y < SCREEN_HEIGHT - 1)
@@ -216,11 +225,8 @@ void drawTriangleToPixelBuffer(Triangle tri, std::array<sf::Uint8, SCREEN_WIDTH 
     {
         Vertex vertexOne = tri.vertices[i];
         Vertex vertexTwo = tri.vertices[(i + 1) % 3];
-
-        // if (vertexOne.z < -1 || vertexOne.z > 1 || vertexTwo.z < -1 || vertexTwo.z > 1)
-            // continue;
         
-        drawLineToPixelBuffer({(unsigned int)vertexOne.x, (unsigned int)vertexOne.y}, {(unsigned int)vertexTwo.x, (unsigned int)vertexTwo.y}, pixelBuffer, cr, cg, cb);
+        drawLineToPixelBuffer(vertexOne, vertexTwo, pixelBuffer, cr, cg, cb);
     }
 }
 
@@ -238,13 +244,17 @@ bool isPointInTriangle(Triangle tri, sf::Vector2i point)
     return true;
 }
 
-void drawFilledTriangleToPixelBuffer(Triangle tri, std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer, int cr = 255, int cg = 255, int cb = 255)
+void drawFilledTriangleToPixelBuffer(Triangle tri, std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer,
+    std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>* depthBuffer, int cr = 255, int cg = 255, int cb = 255)
 {
     // Get area of triangle
     int x_min = std::min(std::min((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
     int x_max = std::max(std::max((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
     int y_min = std::min(std::min((int)tri.vertices[0].y, (int)tri.vertices[1].y), (int)tri.vertices[2].y);
     int y_max = std::max(std::max((int)tri.vertices[0].y, (int)tri.vertices[1].y), (int)tri.vertices[2].y);
+
+    // Calculate average triangle depth
+    float depth = (tri.vertices[0].w + tri.vertices[1].w + tri.vertices[2].w) / 3;
 
     // Draw pixels in triangle
     for (int y = y_min; y < y_max; y++)
@@ -256,6 +266,9 @@ void drawFilledTriangleToPixelBuffer(Triangle tri, std::array<sf::Uint8, SCREEN_
             if (x < 0 || x > SCREEN_WIDTH - 1)
                 continue;
             
+            if ((*depthBuffer)[x + y * SCREEN_WIDTH] < depth)
+                continue;
+            
             // Test if pixel is in triangle using cross product
             if (isPointInTriangle(tri, {x, y}))
             {
@@ -264,6 +277,8 @@ void drawFilledTriangleToPixelBuffer(Triangle tri, std::array<sf::Uint8, SCREEN_
                 (*pixelBuffer)[pixel] = cr;
                 (*pixelBuffer)[pixel + 1] = cg;
                 (*pixelBuffer)[pixel + 2] = cb;
+                // Draw to depth buffer
+                (*depthBuffer)[x + y * SCREEN_WIDTH] = depth;
             }
         }
     }
@@ -298,7 +313,10 @@ int main()
 
     // Screen stuff
     std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer = new std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>;
+    std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>* depthBuffer = new std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>;
+
     clearPixelBuffer(pixelBuffer);
+    clearDepthBuffer(depthBuffer);
 
     sf::Image renderImage;
 
@@ -335,6 +353,7 @@ int main()
         window.clear();
 
         clearPixelBuffer(pixelBuffer);
+        clearDepthBuffer(depthBuffer);
 
         for (sf::Vector3f cubePos : cubePositions)
         {
@@ -369,7 +388,7 @@ int main()
                     transformedVertex = rotateVertexX(transformedVertex, -cameraRot.x);
                     
                     // To clip space
-                    transformedVertex = vertexToClipSpace(transformedVertex, {SCREEN_WIDTH, SCREEN_HEIGHT}, 3.14 / 2.0, 0.1, 20);
+                    transformedVertex = vertexToClipSpace(transformedVertex, {SCREEN_WIDTH, SCREEN_HEIGHT}, 3.14 / 2.0, 0.1, 100);
 
                     clipSpaceTriangle.vertices[j] = transformedVertex;
                 }
@@ -391,6 +410,8 @@ int main()
                 clipTriangles(triangles, makePlane({0, 1, 0}, {0, -1, 0}));
                 clipTriangles(triangles, makePlane({1, 0, 0}, {-1, 0, 0}));
                 clipTriangles(triangles, makePlane({0, -1, 0}, {0, 1, 0}));
+                clipTriangles(triangles, makePlane({0, 0, -1}, {0, 0, 1}));
+                clipTriangles(triangles, makePlane({0, 0, 1}, {0, 0, -1}));
 
                 // Draw clipped triangles
                 for (int i = 0; i < triangles.size(); i++)
@@ -415,8 +436,8 @@ int main()
                         continue;
 
                     // Draw triangle
-                    drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, pixelBuffer, lightColour, lightColour, lightColour);
-                    drawTriangleToPixelBuffer(clippedProjectedTriangle, pixelBuffer, 100, 100, 100);
+                    drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, pixelBuffer, depthBuffer, lightColour, lightColour, lightColour);
+                    // drawTriangleToPixelBuffer(clippedProjectedTriangle, pixelBuffer, 100, 100, 100);
                 }
 
 
