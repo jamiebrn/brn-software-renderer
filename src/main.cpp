@@ -46,12 +46,12 @@ Plane makePlane(sf::Vector3f point, sf::Vector3f normal)
 
 bool isVertexInFrontPlane(Vertex vertex, Plane plane)
 {
-    return plane.A * vertex.x + plane.B * vertex.y + plane.C * vertex.z + plane.D >= 0;
+    return plane.A * vertex.x + plane.B * vertex.y + plane.C * vertex.z + plane.D * vertex.w >= 0;
 }
 
 float planeIntersectionInterpolationValue(Vertex v1, Vertex v2, Plane plane)
 {
-    return -(v1.x * plane.A + v1.y * plane.B + v1.z * plane.C + plane.D) / (plane.A * (v2.x - v1.x) + plane.B * (v2.y - v1.y) + plane.C * (v2.z - v1.z));
+    return -(v1.x * plane.A + v1.y * plane.B + v1.z * plane.C + plane.D * v1.w) / (plane.A * (v2.x - v1.x) + plane.B * (v2.y - v1.y) + plane.C * (v2.z - v1.z) + plane.D * (v2.w - v1.w));
 }
 
 std::vector<Triangle> clipTriangleToView(Triangle triangle, Plane boundaryPlane)
@@ -64,23 +64,19 @@ std::vector<Triangle> clipTriangleToView(Triangle triangle, Plane boundaryPlane)
         Vertex v1 = triangle.vertices[i];
         Vertex v2 = triangle.vertices[(i + 1) % 3];
 
-        Vertex intersection;
-        float interpolation = planeIntersectionInterpolationValue(v1, v2, boundaryPlane);
-        intersection.x = (v2.x - v1.x) * interpolation + v1.x;
-        intersection.y = (v2.y - v1.y) * interpolation + v1.y;
-        intersection.z = (v2.z - v1.z) * interpolation + v1.z;
-        intersection.w = (v2.w - v1.w) * interpolation + v1.w;
+        bool v1InFront = isVertexInFrontPlane(v1, boundaryPlane);
+        bool v2InFront = isVertexInFrontPlane(v2, boundaryPlane);
 
-        if (isVertexInFrontPlane(v2, boundaryPlane))
+        if (v1InFront) clippedVertices.push_back(v1);
+
+        if (v1InFront != v2InFront)
         {
-            if (!isVertexInFrontPlane(v1, boundaryPlane))
-            {
-                clippedVertices.push_back(intersection);
-            }
-            clippedVertices.push_back(v2);
-        }
-        else if (isVertexInFrontPlane(v1, boundaryPlane))
-        {
+            float interpolate = planeIntersectionInterpolationValue(v1, v2, boundaryPlane);
+            Vertex intersection;
+            intersection.x = v1.x + interpolate * (v2.x - v1.x);
+            intersection.y = v1.y + interpolate * (v2.y - v1.y);
+            intersection.z = v1.z + interpolate * (v2.z - v1.z);
+            intersection.w = v1.w + interpolate * (v2.w - v1.w);
             clippedVertices.push_back(intersection);
         }
     }
@@ -100,6 +96,17 @@ std::vector<Triangle> clipTriangleToView(Triangle triangle, Plane boundaryPlane)
     }
 
     return clippedTriangles;
+}
+
+void clipTriangles(std::vector<Triangle>& triangles, Plane boundaryPlane)
+{
+    std::vector<Triangle> clippedTriangles;
+    for (Triangle& tri : triangles)
+    {
+        std::vector<Triangle> toAdd = clipTriangleToView(tri, boundaryPlane);
+        clippedTriangles.insert(clippedTriangles.end(), toAdd.begin(), toAdd.end());
+    }
+    triangles = clippedTriangles;
 }
 
 Vertex vertexToClipSpace(Vertex vertex, sf::Vector2u screenSize, float fov, float near, float far)
@@ -281,7 +288,7 @@ int main()
     std::vector<sf::Vector3f> cubePositions = {{0, 0, -10}};
     for (int i = 0; i < 10; i++)
     {
-        // cubePositions.push_back(sf::Vector3f(rand() % 400, rand() % 400, rand() % 400));
+        cubePositions.push_back(sf::Vector3f(rand() % 40, rand() % 40, rand() % 40));
     }
 
     sf::Vector3f rotation = {0, 0, 0};
@@ -336,9 +343,8 @@ int main()
             {
                 Triangle transformedTriangle;
                 Triangle clipSpaceTriangle;
-                Triangle projectedTriangle;
 
-                // Transform vertices
+                // Transform vertices to (homogeneous) clip space
                 for (int j = 0; j < 3; j++)
                 {
                     Vertex transformedVertex = cubeMesh[i].vertices[j];
@@ -363,29 +369,13 @@ int main()
                     transformedVertex = rotateVertexX(transformedVertex, -cameraRot.x);
                     
                     // To clip space
-                    transformedVertex = vertexToClipSpace(transformedVertex, {SCREEN_WIDTH, SCREEN_HEIGHT}, 3.14 / 2.0, 0.01, 100);
+                    transformedVertex = vertexToClipSpace(transformedVertex, {SCREEN_WIDTH, SCREEN_HEIGHT}, 3.14 / 2.0, 0.1, 20);
 
                     clipSpaceTriangle.vertices[j] = transformedVertex;
-
-                    // Perspective divide
-                    transformedVertex.x /= transformedVertex.w;
-                    transformedVertex.y /= transformedVertex.w;
-                    transformedVertex.z /= transformedVertex.w;
-
-                    // To screen space
-                    transformedVertex.x = transformedVertex.x * SCREEN_WIDTH / 2.0 + SCREEN_WIDTH / 2.0;
-                    transformedVertex.y = transformedVertex.y * SCREEN_HEIGHT / 2.0 + SCREEN_HEIGHT / 2.0;
-
-                    projectedTriangle.vertices[j] = transformedVertex;
                 }
-
-                // Backface culling
-                sf::Vector3f faceNormal = calculateTriNormal(projectedTriangle);
-                if (faceNormal.z > 0)
-                    continue;
                 
                 // Face lighting
-                faceNormal = calculateTriNormal(transformedTriangle);
+                sf::Vector3f faceNormal = calculateTriNormal(transformedTriangle);
 
                 sf::Vector3f lightVector = {0, 0, -1};
 
@@ -396,8 +386,11 @@ int main()
                 float lightColour = 70 + (255 - 70) * (dotProduct + 1) * 0.5;
 
                 // Clip triangle
-                std::vector<Triangle> triangles;
-                triangles = clipTriangleToView(clipSpaceTriangle, makePlane({1, 0, 0}, {-1, 0, 0}));
+                std::vector<Triangle> triangles = {clipSpaceTriangle};
+                clipTriangles(triangles, makePlane({-1, 0, 0}, {1, 0, 0}));
+                clipTriangles(triangles, makePlane({0, 1, 0}, {0, -1, 0}));
+                clipTriangles(triangles, makePlane({1, 0, 0}, {-1, 0, 0}));
+                clipTriangles(triangles, makePlane({0, -1, 0}, {0, 1, 0}));
 
                 // Draw clipped triangles
                 for (int i = 0; i < triangles.size(); i++)
@@ -422,7 +415,7 @@ int main()
                         continue;
 
                     // Draw triangle
-                    // drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, pixelBuffer, lightColour, lightColour, lightColour);
+                    drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, pixelBuffer, lightColour, lightColour, lightColour);
                     drawTriangleToPixelBuffer(clippedProjectedTriangle, pixelBuffer, 100, 100, 100);
                 }
 
