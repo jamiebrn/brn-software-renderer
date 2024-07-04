@@ -2,7 +2,7 @@
 
 brn::Vertex brn::rotateVertex(const Vertex& vertex, const Vector3& rotation)
 {
-    Vertex rotatedVertex;
+    Vertex rotatedVertex = vertex;
     rotatedVertex.x = (
         vertex.x * cos(rotation.y) * cos(rotation.z) +
         vertex.y * (sin(rotation.x) * sin(rotation.y) * cos(rotation.z) - cos(rotation.x) * sin(rotation.z)) +

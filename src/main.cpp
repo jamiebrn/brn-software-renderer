@@ -19,9 +19,12 @@ int main()
 
     sf::Clock clock;
 
-    brn::Mesh cubeMesh = brn::createCubeMesh();
+    brn::Mesh cubeMeshRed = brn::createCubeMesh(1, 1, 1, 255, 0, 0);
+    brn::Mesh cubeMeshGreen = brn::createCubeMesh(1, 1, 1, 0, 255, 0);
+    brn::Mesh cubeMeshBlue = brn::createCubeMesh(1, 1, 1, 0, 0, 255);
+    brn::Mesh cubeMeshWhite = brn::createCubeMesh(1, 1, 1, 255, 255, 255);
 
-    std::vector<std::array<brn::Vector3, 3>> cubes;
+    std::vector<std::array<brn::Vector3, 4>> cubes;
 
     brn::Vector3 cameraPos = {0, 0, 0};
     brn::Vector3 cameraRot = {0, 0, 0};
@@ -37,7 +40,8 @@ int main()
         if (totalTime >= 0.01)
         {
             totalTime = 0;
-            cubes.push_back({{{0, -10, -30}, {(float)(rand() % 25) - 12, (float)(rand() % 20) + 25, (float)(rand() % 25) - 12}, {(float)(rand() % 7), (float)(rand() % 7), (float)(rand() % 7)}}});
+            cubes.push_back({{{0, -10, -30}, {(float)(rand() % 25) - 12, (float)(rand() % 20) + 25, (float)(rand() % 25) - 12},
+                {(float)(rand() % 7), (float)(rand() % 7), (float)(rand() % 7)}, {(float)(rand() % 4), 0, 0}}});
         }
 
         for (auto event = sf::Event{}; renderer.getWindow().pollEvent(event);)
@@ -69,7 +73,7 @@ int main()
 
         for (int i = 0; i < cubes.size(); i++)
         {
-            std::array<brn::Vector3, 3>& cube = cubes[i];
+            std::array<brn::Vector3, 4>& cube = cubes[i];
 
             // Apply physics
             cube[0].x += cube[1].x * dt;
@@ -85,7 +89,10 @@ int main()
             }
 
             // Draw cube
-            renderer.drawMesh(cubeMesh, cube[0], cube[2], {1, 1, 1});
+            if (cube[3].x == 0) renderer.drawMesh(cubeMeshRed, cube[0], cube[2], {1, 1, 1});
+            else if (cube[3].x == 1) renderer.drawMesh(cubeMeshGreen, cube[0], cube[2], {1, 1, 1});
+            else if (cube[3].x == 2) renderer.drawMesh(cubeMeshBlue, cube[0], cube[2], {1, 1, 1});
+            else if (cube[3].x == 3) renderer.drawMesh(cubeMeshWhite, cube[0], cube[2], {1, 1, 1});
 
         }
 

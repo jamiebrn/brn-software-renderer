@@ -31,9 +31,9 @@ public:
 
     void drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale);
 
-    void drawLineToPixelBuffer(const Vertex& a, const Vertex& b, int cr = 255, int cg = 255, int cb = 255);
-    void drawTriangleToPixelBuffer(const Triangle& tri, int cr = 255, int cg = 255, int cb = 255);
-    void drawFilledTriangleToPixelBuffer(const Triangle& tri, int cr = 255, int cg = 255, int cb = 255);
+    void drawLineToPixelBuffer(const Vertex& a, const Vertex& b);
+    void drawTriangleToPixelBuffer(const Triangle& tri);
+    void drawFilledTriangleToPixelBuffer(const Triangle& tri, float lightStrength = 1.0f);
 
     void setCamera(const Vector3& position, const Vector3& rotation);
     

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math.h"
+#include <math.h>
 
 #include "Mathematics/Vertex.hpp"
 #include "Mathematics/Vector3.hpp"

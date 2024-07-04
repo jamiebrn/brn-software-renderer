@@ -1,20 +1,20 @@
 #include "Mathematics/Mesh.hpp"
 
-brn::Mesh brn::createCubeMesh(float height, float width, float depth)
+brn::Mesh brn::createCubeMesh(float height, float width, float depth, int r, int g, int b)
 {
     Mesh cubeMesh = {{
-        {{-width / 2.0f, height / 2.0f, depth / 2.0f},     {width / 2.0f, height / 2.0f, depth / 2.0f},       {-width / 2.0f, -height / 2.0f, depth / 2.0f}},
-        {{width / 2.0f, height / 2.0f, depth / 2.0f},      {width / 2.0f, -height / 2.0f, depth / 2.0f},      {-width / 2.0f, -height / 2.0f, depth / 2.0f}},    // front
-        {{width / 2.0f, height / 2.0f, -depth / 2.0f},     {-width / 2.0f, height / 2.0f, -depth / 2.0f},     {width / 2.0f, -height / 2.0f, -depth / 2.0f}},
-        {{-width / 2.0f, height / 2.0f, -depth / 2.0f},    {-width / 2.0f, -height / 2.0f, -depth / 2.0f},    {width / 2.0f, -height / 2.0f, -depth / 2.0f}},    // back
-        {{width / 2.0f, height / 2.0f, depth / 2.0f},      {width / 2.0f, height / 2.0f, -depth / 2.0f},       {width / 2.0f, -height / 2.0f, depth / 2.0f}},
-        {{width / 2.0f, height / 2.0f, -depth / 2.0f},      {width / 2.0f, -height / 2.0f, -depth / 2.0f},    {width / 2.0f, -height / 2.0f, depth / 2.0f}},     // right
-        {{-width / 2.0f, height / 2.0f, -depth / 2.0f},    {-width / 2.0f, height / 2.0f, depth / 2.0f},      {-width / 2.0f, -height / 2.0f, -depth / 2.0f}},
-        {{-width / 2.0f, height / 2.0f, depth / 2.0f},     {-width / 2.0f, -height / 2.0f, depth / 2.0f},     {-width / 2.0f, -height / 2.0f, -depth / 2.0f}},   // left
-        {{-width / 2.0f, height / 2.0f, -depth / 2.0f},    {width / 2.0f, height / 2.0f, -depth / 2.0f},      {-width / 2.0f, height / 2.0f, depth / 2.0f}},
-        {{width / 2.0f, height / 2.0f, -depth / 2.0f},     {width / 2.0f, height / 2.0f, depth / 2.0f},       {-width / 2.0f, height / 2.0f, depth / 2.0f}},     // top
-        {{-width / 2.0f, -height / 2.0f, depth / 2.0f},    {width / 2.0f, -height / 2.0f, depth / 2.0f},      {-width / 2.0f, -height / 2.0f, -depth / 2.0f}},
-        {{width / 2.0f, -height / 2.0f, depth / 2.0f},     {width / 2.0f, -height / 2.0f, -depth / 2.0f},     {-width / 2.0f, -height / 2.0f, -depth / 2.0f}}    // bottom
+        {{-width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b},     {width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b},       {-width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b}},
+        {{width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b},      {width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b},      {-width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b}},    // front
+        {{width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},     {-width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},     {width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b}},
+        {{-width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},    {-width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b},    {width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b}},    // back
+        {{width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b},      {width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},      {width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b}},
+        {{width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},     {width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b},     {width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b}},     // right
+        {{-width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},    {-width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b},      {-width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b}},
+        {{-width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b},     {-width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b},     {-width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b}},   // left
+        {{-width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},    {width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},      {-width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b}},
+        {{width / 2.0f, height / 2.0f, -depth / 2.0f, r, g, b},     {width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b},       {-width / 2.0f, height / 2.0f, depth / 2.0f, r, g, b}},     // top
+        {{-width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b},    {width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b},      {-width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b}},
+        {{width / 2.0f, -height / 2.0f, depth / 2.0f, r, g, b},     {width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b},     {-width / 2.0f, -height / 2.0f, -depth / 2.0f, r, g, b}}    // bottom
     }};
 
     return cubeMesh;

@@ -85,7 +85,8 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
         faceNormal = {faceNormal.x / normalLength, faceNormal.y / normalLength, faceNormal.z / normalLength};
         float dotProduct = lightVector.x * faceNormal.x + lightVector.y * faceNormal.y + lightVector.z * faceNormal.z;
 
-        float lightColour = 70 + (255 - 70) * (dotProduct + 1) * 0.5;
+        // Light strength between 1 and 0.5
+        float lightStrength = (dotProduct + 1) * 0.25 + 0.5;
 
         // Clip triangle
         std::queue<brn::Triangle> triangles;
@@ -120,14 +121,14 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
                 continue;
 
             // Draw triangle
-            drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, lightColour, lightColour, lightColour);
+            drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, lightStrength);
             // renderer.drawTriangleToPixelBuffer(clippedProjectedTriangle, 100, 100, 100);
         }
     }
 
 }
 
-void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b, int cr, int cg, int cb)
+void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b)
 {
     int dx = (unsigned int)b.x - (unsigned int)a.x;
     int dy = (unsigned int)b.y - (unsigned int)a.y;
@@ -142,16 +143,16 @@ void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b, i
         {
             // Draw pixel to buffer
             int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH * 4);
-            (*pixelBuffer)[pixel] = cr;
-            (*pixelBuffer)[pixel + 1] = cg;
-            (*pixelBuffer)[pixel + 2] = cb;
+            (*pixelBuffer)[pixel] = a.r;
+            (*pixelBuffer)[pixel + 1] = a.g;
+            (*pixelBuffer)[pixel + 2] = a.b;
         }
         x += xInc;
         y += yInc;
     }
 }
 
-void brn::BrnRenderer::drawTriangleToPixelBuffer(const Triangle& tri, int cr, int cg, int cb)
+void brn::BrnRenderer::drawTriangleToPixelBuffer(const Triangle& tri)
 {
     // Draw lines of triangle
     for (int i = 0; i < 3; i++)
@@ -159,11 +160,11 @@ void brn::BrnRenderer::drawTriangleToPixelBuffer(const Triangle& tri, int cr, in
         Vertex vertexOne = tri.vertices[i];
         Vertex vertexTwo = tri.vertices[(i + 1) % 3];
         
-        drawLineToPixelBuffer(vertexOne, vertexTwo, cr, cg, cb);
+        drawLineToPixelBuffer(vertexOne, vertexTwo);
     }
 }
 
-void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, int cr, int cg, int cb)
+void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, float lightStrength)
 {
     // Get area of triangle
     int x_min = std::min(std::min((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
@@ -173,6 +174,8 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, int 
 
     // Calculate average triangle depth
     float depth = (tri.vertices[0].w + tri.vertices[1].w + tri.vertices[2].w) / 3;
+
+    // std::cout << tri.vertices[0].r << " " << tri.vertices[0].g << " " << tri.vertices[0].b << std::endl;
 
     // Draw pixels in triangle
     for (int y = y_min; y < y_max; y++)
@@ -192,9 +195,9 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, int 
             {
                 // Draw pixel to buffer
                 int pixel = x * 4 + y * SCREEN_WIDTH * 4;
-                (*pixelBuffer)[pixel] = cr;
-                (*pixelBuffer)[pixel + 1] = cg;
-                (*pixelBuffer)[pixel + 2] = cb;
+                (*pixelBuffer)[pixel] = (int)((float)(tri.vertices[0].r) * lightStrength);
+                (*pixelBuffer)[pixel + 1] = (int)((float)(tri.vertices[0].g) * lightStrength);
+                (*pixelBuffer)[pixel + 2] = (int)((float)(tri.vertices[0].b) * lightStrength);
                 // Draw to depth buffer
                 (*depthBuffer)[x + y * SCREEN_WIDTH] = depth;
             }

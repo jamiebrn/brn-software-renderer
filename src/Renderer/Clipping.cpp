@@ -23,7 +23,7 @@ void brn::clipTriangleOnPlane(const Triangle& triangle, const Plane& boundaryPla
         if (v1InFront != v2InFront)
         {
             float interpolate = boundaryPlane.calcIntersectionInterpolationValue(v1, v2);
-            Vertex intersection;
+            Vertex intersection = v2;
             intersection.x = v1.x + interpolate * (v2.x - v1.x);
             intersection.y = v1.y + interpolate * (v2.y - v1.y);
             intersection.z = v1.z + interpolate * (v2.z - v1.z);
