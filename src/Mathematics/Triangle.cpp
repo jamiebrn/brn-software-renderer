@@ -19,7 +19,7 @@ brn::Vector3 brn::Triangle::calculateNormal()
     };
 }
 
-bool brn::Triangle::isPointInTriangle(Vector2i point)
+bool brn::Triangle::isPointInTriangle(const Vector2i& point) const
 {
     for (int i = 0; i < 3; i++)
     {

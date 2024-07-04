@@ -31,9 +31,9 @@ public:
 
     void drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale);
 
-    void drawLineToPixelBuffer(Vertex a, Vertex b, int cr = 255, int cg = 255, int cb = 255);
-    void drawTriangleToPixelBuffer(Triangle tri, int cr = 255, int cg = 255, int cb = 255);
-    void drawFilledTriangleToPixelBuffer(Triangle tri, int cr = 255, int cg = 255, int cb = 255);
+    void drawLineToPixelBuffer(const Vertex& a, const Vertex& b, int cr = 255, int cg = 255, int cb = 255);
+    void drawTriangleToPixelBuffer(const Triangle& tri, int cr = 255, int cg = 255, int cb = 255);
+    void drawFilledTriangleToPixelBuffer(const Triangle& tri, int cr = 255, int cg = 255, int cb = 255);
 
     void setCamera(const Vector3& position, const Vector3& rotation);
     
@@ -42,7 +42,7 @@ public:
 
     bool windowOpen();
 
-    void setWindowTitle(std::string title);
+    void setWindowTitle(const std::string& title);
 
     sf::RenderWindow& getWindow();
 

@@ -71,7 +71,7 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
             transformedVertex = rotateVertexX(transformedVertex, -cameraRotation.x);
             
             // To clip space
-            transformedVertex = brn::vertexToClipSpace(transformedVertex, SCREEN_WIDTH, SCREEN_HEIGHT, 3.14 / 2.0, 0.1, 100);
+            brn::vertexToClipSpace(transformedVertex, SCREEN_WIDTH, SCREEN_HEIGHT, 3.14 / 2.0, 0.1, 100);
 
             clipSpaceTriangle.vertices[j] = transformedVertex;
         }
@@ -127,7 +127,7 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
 
 }
 
-void brn::BrnRenderer::drawLineToPixelBuffer(Vertex a, Vertex b, int cr, int cg, int cb)
+void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b, int cr, int cg, int cb)
 {
     int dx = (unsigned int)b.x - (unsigned int)a.x;
     int dy = (unsigned int)b.y - (unsigned int)a.y;
@@ -151,7 +151,7 @@ void brn::BrnRenderer::drawLineToPixelBuffer(Vertex a, Vertex b, int cr, int cg,
     }
 }
 
-void brn::BrnRenderer::drawTriangleToPixelBuffer(Triangle tri, int cr, int cg, int cb)
+void brn::BrnRenderer::drawTriangleToPixelBuffer(const Triangle& tri, int cr, int cg, int cb)
 {
     // Draw lines of triangle
     for (int i = 0; i < 3; i++)
@@ -163,7 +163,7 @@ void brn::BrnRenderer::drawTriangleToPixelBuffer(Triangle tri, int cr, int cg, i
     }
 }
 
-void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(Triangle tri, int cr, int cg, int cb)
+void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, int cr, int cg, int cb)
 {
     // Get area of triangle
     int x_min = std::min(std::min((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
@@ -237,7 +237,7 @@ bool brn::BrnRenderer::windowOpen()
     return window.isOpen();
 }
 
-void brn::BrnRenderer::setWindowTitle(std::string title)
+void brn::BrnRenderer::setWindowTitle(const std::string& title)
 {
     window.setTitle(title);
 }

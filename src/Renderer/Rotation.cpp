@@ -1,6 +1,6 @@
 #include "Renderer/Rotation.hpp"
 
-brn::Vertex brn::rotateVertex(Vertex vertex, Vector3 rotation)
+brn::Vertex brn::rotateVertex(const Vertex& vertex, const Vector3& rotation)
 {
     Vertex rotatedVertex;
     rotatedVertex.x = (
@@ -21,7 +21,7 @@ brn::Vertex brn::rotateVertex(Vertex vertex, Vector3 rotation)
     return rotatedVertex;
 }
 
-brn::Vertex brn::rotateVertexX(Vertex vertex, float angle)
+brn::Vertex brn::rotateVertexX(const Vertex& vertex, float angle)
 {
     Vertex rotatedVertex = vertex;
     rotatedVertex.y = vertex.y * cos(angle) - vertex.z * sin(angle);
@@ -29,7 +29,7 @@ brn::Vertex brn::rotateVertexX(Vertex vertex, float angle)
     return rotatedVertex;
 }
 
-brn::Vertex brn::rotateVertexY(Vertex vertex, float angle)
+brn::Vertex brn::rotateVertexY(const Vertex& vertex, float angle)
 {
     Vertex rotatedVertex = vertex;
     rotatedVertex.x = vertex.x * cos(angle) + vertex.z * sin(angle);

@@ -13,9 +13,9 @@ struct Plane
     Plane() = default;
     Plane(Vector3 point, Vector3 normal);
 
-    bool isVertexInFront(Vertex vertex);
+    bool isVertexInFront(const Vertex& vertex) const;
 
-    float calcIntersectionInterpolationValue(Vertex v1, Vertex v2);
+    float calcIntersectionInterpolationValue(const Vertex& v1, const Vertex& v2) const;
 };
 
 }

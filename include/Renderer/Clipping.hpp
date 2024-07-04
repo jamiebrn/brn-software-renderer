@@ -9,8 +9,8 @@
 namespace brn
 {
 
-void clipTriangleOnPlane(Triangle triangle, Plane boundaryPlane, std::queue<brn::Triangle>& clippedTriangles);
+void clipTriangleOnPlane(const Triangle& triangle, const Plane& boundaryPlane, std::queue<brn::Triangle>& clippedTriangles);
 
-void clipTriangles(std::queue<brn::Triangle>& triangles, Plane boundaryPlane);
+void clipTriangles(std::queue<brn::Triangle>& triangles, const Plane& boundaryPlane);
 
 }

@@ -1,6 +1,6 @@
 #include "Renderer/Clipping.hpp"
 
-void brn::clipTriangleOnPlane(Triangle triangle, Plane boundaryPlane, std::queue<brn::Triangle>& clippedTriangles)
+void brn::clipTriangleOnPlane(const Triangle& triangle, const Plane& boundaryPlane, std::queue<brn::Triangle>& clippedTriangles)
 {
     std::array<Vertex, 5> clippedVertices;
     int clippedVertexCount = 0;
@@ -48,7 +48,7 @@ void brn::clipTriangleOnPlane(Triangle triangle, Plane boundaryPlane, std::queue
     }
 }
 
-void brn::clipTriangles(std::queue<brn::Triangle>& triangles, Plane boundaryPlane)
+void brn::clipTriangles(std::queue<brn::Triangle>& triangles, const Plane& boundaryPlane)
 {
     // std::vector<Triangle> clippedTriangles;
     int queueSize = triangles.size();

@@ -7,6 +7,6 @@
 namespace brn
 {
 
-Vertex vertexToClipSpace(Vertex vertex, int screenWidth, int screenHeight, float fov, float near, float far);
+void vertexToClipSpace(Vertex& vertex, int screenWidth, int screenHeight, float fov, float near, float far);
 
 }

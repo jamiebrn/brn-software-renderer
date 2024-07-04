@@ -8,10 +8,10 @@
 namespace brn
 {
 
-Vertex rotateVertex(Vertex vertex, Vector3 rotation);
+Vertex rotateVertex(const Vertex& vertex, const Vector3& rotation);
 
-Vertex rotateVertexX(Vertex vertex, float angle);
+Vertex rotateVertexX(const Vertex& vertex, float angle);
 
-Vertex rotateVertexY(Vertex vertex, float angle);
+Vertex rotateVertexY(const Vertex& vertex, float angle);
 
 }
