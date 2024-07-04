@@ -15,11 +15,11 @@ int main()
 {
     srand(time(NULL));
 
-    brn::BrnRenderer renderer("BrnRenderer");
+    brn::BrnRenderer renderer;
 
     sf::Clock clock;
 
-    brn::Mesh cubeMesh = brn::createCubeMesh(1, 1, 1);
+    brn::Mesh cubeMesh = brn::createCubeMesh();
 
     std::vector<std::array<brn::Vector3, 3>> cubes;
 
@@ -64,9 +64,6 @@ int main()
 
         // Update camera
         renderer.setCamera(cameraPos, cameraRot);
-
-        // rotation.x += dt / 8.0;
-        // rotation.y += dt / 3.0;
 
         renderer.clearScreen();
 

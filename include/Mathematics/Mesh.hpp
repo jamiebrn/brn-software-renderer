@@ -12,6 +12,6 @@ struct Mesh
     std::vector<Triangle> triangles;
 };
 
-Mesh createCubeMesh(float height, float width, float depth);
+Mesh createCubeMesh(float height = 1.0f, float width = 1.0f, float depth = 1.0f);
 
 }

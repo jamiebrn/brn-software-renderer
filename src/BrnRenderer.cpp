@@ -51,8 +51,9 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
             brn::Vertex transformedVertex = mesh.triangles[i].vertices[j];
 
             // Scale
-            transformedVertex = transformedVertex;
-            // transformedVertex.z = transformedVertex.z * 6;
+            transformedVertex.x *= scale.x;
+            transformedVertex.y *= scale.y;
+            transformedVertex.z *= scale.z;
 
             // Rotate
             transformedVertex = rotateVertex(transformedVertex, rotation);
@@ -87,16 +88,17 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
         float lightColour = 70 + (255 - 70) * (dotProduct + 1) * 0.5;
 
         // Clip triangle
-        std::vector<brn::Triangle> triangles = {clipSpaceTriangle};
+        std::queue<brn::Triangle> triangles;
+        triangles.push(clipSpaceTriangle);
         for (int i = 0; i < clippingPlanes.size(); i++)
         {
             brn::clipTriangles(triangles, clippingPlanes[i]);
         }
 
         // Draw clipped triangles
-        for (int i = 0; i < triangles.size(); i++)
+        while (triangles.size() > 0)
         {
-            brn::Triangle clippedProjectedTriangle = triangles[i];
+            brn::Triangle& clippedProjectedTriangle = triangles.front();
 
             for (int vertex = 0; vertex < 3; vertex++)
             {
@@ -109,6 +111,8 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
                 clippedProjectedTriangle.vertices[vertex].x = clippedProjectedTriangle.vertices[vertex].x * SCREEN_WIDTH / 2.0 + SCREEN_WIDTH / 2.0;
                 clippedProjectedTriangle.vertices[vertex].y = clippedProjectedTriangle.vertices[vertex].y * SCREEN_HEIGHT / 2.0 + SCREEN_HEIGHT / 2.0;
             }
+
+            triangles.pop();
 
             // Backface culling
             brn::Vector3 faceNormal = clippedProjectedTriangle.calculateNormal();

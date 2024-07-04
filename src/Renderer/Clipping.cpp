@@ -1,8 +1,9 @@
 #include "Renderer/Clipping.hpp"
 
-std::vector<brn::Triangle> brn::clipTriangleOnPlane(Triangle triangle, Plane boundaryPlane)
+void brn::clipTriangleOnPlane(Triangle triangle, Plane boundaryPlane, std::queue<brn::Triangle>& clippedTriangles)
 {
-    std::vector<Vertex> clippedVertices;
+    std::array<Vertex, 5> clippedVertices;
+    int clippedVertexCount = 0;
 
     // Clip all triangle vertices
     for (int i = 0; i < 3; i++)
@@ -13,7 +14,11 @@ std::vector<brn::Triangle> brn::clipTriangleOnPlane(Triangle triangle, Plane bou
         bool v1InFront = boundaryPlane.isVertexInFront(v1);
         bool v2InFront = boundaryPlane.isVertexInFront(v2);
 
-        if (v1InFront) clippedVertices.push_back(v1);
+        if (v1InFront)
+        {
+            clippedVertices[clippedVertexCount] = v1;
+            clippedVertexCount++;
+        }
 
         if (v1InFront != v2InFront)
         {
@@ -23,34 +28,39 @@ std::vector<brn::Triangle> brn::clipTriangleOnPlane(Triangle triangle, Plane bou
             intersection.y = v1.y + interpolate * (v2.y - v1.y);
             intersection.z = v1.z + interpolate * (v2.z - v1.z);
             intersection.w = v1.w + interpolate * (v2.w - v1.w);
-            clippedVertices.push_back(intersection);
+            clippedVertices[clippedVertexCount] = intersection;
+            clippedVertexCount++;
         }
     }
+
+    // Do not construct triangles if not enough vertices
+    if (clippedVertexCount < 3)
+        return;
 
     // Construct triangles from clipped vertices
-    std::vector<Triangle> clippedTriangles;
-    if (clippedVertices.size() > 0)
+    for (int i = 0; i < clippedVertexCount - 2; i++)
     {
-        for (int i = 0; i < clippedVertices.size() - 2; i++)
-        {
-            Triangle clippedTriangle;
-            clippedTriangle.vertices[0] = clippedVertices[0];
-            clippedTriangle.vertices[1] = clippedVertices[i + 1];
-            clippedTriangle.vertices[2] = clippedVertices[i + 2];
-            clippedTriangles.push_back(clippedTriangle);
-        }
+        Triangle clippedTriangle;
+        clippedTriangle.vertices[0] = clippedVertices[0];
+        clippedTriangle.vertices[1] = clippedVertices[i + 1];
+        clippedTriangle.vertices[2] = clippedVertices[i + 2];
+        clippedTriangles.push(clippedTriangle);
     }
-
-    return clippedTriangles;
 }
 
-void brn::clipTriangles(std::vector<Triangle>& triangles, Plane boundaryPlane)
+void brn::clipTriangles(std::queue<brn::Triangle>& triangles, Plane boundaryPlane)
 {
-    std::vector<Triangle> clippedTriangles;
-    for (Triangle& tri : triangles)
+    // std::vector<Triangle> clippedTriangles;
+    int queueSize = triangles.size();
+    for (int i = 0; i < queueSize; i++)
     {
-        std::vector<Triangle> toAdd = clipTriangleOnPlane(tri, boundaryPlane);
-        clippedTriangles.insert(clippedTriangles.end(), toAdd.begin(), toAdd.end());
+        clipTriangleOnPlane(triangles.front(), boundaryPlane, triangles);
+        triangles.pop();
     }
-    triangles = clippedTriangles;
+    // for (Triangle& tri : triangles)
+    // {
+    //     std::vector<Triangle> toAdd = clipTriangleOnPlane(tri, boundaryPlane);
+    //     clippedTriangles.insert(clippedTriangles.end(), toAdd.begin(), toAdd.end());
+    // }
+    // triangles = clippedTriangles;
 }
