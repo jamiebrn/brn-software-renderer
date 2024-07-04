@@ -2,8 +2,10 @@
 #include <array>
 #include <vector>
 #include <memory>
-#include <math.h>
 #include <iostream>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include "BrnRenderer.hpp"
 #include "Mathematics/Plane.hpp"
@@ -20,15 +22,26 @@ int main()
 
     sf::Clock clock;
 
-    brn::Mesh cubeMeshWhite = brn::createCubeMesh(1, 1, 1, 255, 255, 255);
+    brn::Mesh cubeMesh = brn::createCubeMesh(1, 1, 1, 200, 200, 200);
+    brn::Mesh cubeMeshRed = brn::createCubeMesh(1, 1, 1, 220, 60, 60);
+    brn::Mesh pyramidMesh = brn::createPyramidSqMesh(1, 1, 1, 255, 255, 50);
+
+    std::vector<brn::Vector3> pyramidPos;
+    for (int i = 0; i < 20; i++)
+    {
+        pyramidPos.push_back({(float)(rand() % 80 - 40), 3, (float)(rand() % 80 - 80)});
+    }
 
     brn::Vector3 cameraPos = {0, 0, 0};
     brn::Vector3 cameraRot = {0, 0, 0};
+
+    float time = 0;
 
     while (renderer.windowOpen())
     {
 
         float dt = clock.restart().asSeconds();
+        time += dt;
 
         for (auto event = sf::Event{}; renderer.getWindow().pollEvent(event);)
         {
@@ -57,7 +70,12 @@ int main()
 
         renderer.clearScreen(40, 40, 40);
 
-        renderer.drawMesh(cubeMeshWhite, {0, 0, -10}, {0, 0, 0}, {4, 4, 4});
+        // for (brn::Vector3 pos : pyramidPos)
+        // {
+        //     renderer.drawMesh(pyramidMesh, pos, {M_PI, time, 0}, {1, 1, 1});
+        // }
+        renderer.drawMesh(cubeMesh, {0, 0, -10}, {0, time, time / 3.0f}, {3, 3, 3});
+        renderer.drawMesh(cubeMeshRed, {-2, 2, -10}, {0, time + 1.2f, time / 3.0f + 2.0f}, {3, 3, 3});
 
         renderer.updateScreen();
 

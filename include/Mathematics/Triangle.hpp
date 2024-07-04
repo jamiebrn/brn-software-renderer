@@ -16,7 +16,7 @@ struct Triangle
     Triangle(Vertex a, Vertex b, Vertex c) : vertices{a, b, c} {}
 
     Vector3 calculateNormal();
-    bool isPointInTriangle(const Vector2i& point) const;
+    // bool isPointInTriangle(const Vector2i& point) const;
 };
 
 }

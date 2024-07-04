@@ -1,8 +1,8 @@
 #pragma once
 
-#define SCREEN_WIDTH 600
-#define SCREEN_HEIGHT 400
-#define SCREEN_RENDER_SCALE 2
+#define SCREEN_WIDTH 300
+#define SCREEN_HEIGHT 200
+#define SCREEN_RENDER_SCALE 4
 
 #include <SFML/Graphics.hpp>
 #include <string>
@@ -53,6 +53,9 @@ public:
 private:
     void clearPixelBuffer(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
     void clearDepthBuffer();
+
+    float triangleEdgeCrossProduct(const Vector2& v1, const Vector2& v2, const Vector2& point);
+    bool isTriangleTopOrLeftEdge(const Vector2& v1, const Vector2& v2);
 
 private:
     std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer;

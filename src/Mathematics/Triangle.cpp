@@ -19,16 +19,16 @@ brn::Vector3 brn::Triangle::calculateNormal()
     };
 }
 
-bool brn::Triangle::isPointInTriangle(const Vector2i& point) const
-{
-    for (int i = 0; i < 3; i++)
-    {
-        Vector2i edgeVector = {(int)vertices[(i + 1) % 3].x - (int)vertices[i].x, (int)vertices[(i + 1) % 3].y - (int)vertices[i].y};
-        Vector2i pointVector = {point.x - (int)vertices[i].x, point.y - (int)vertices[i].y};
+// bool brn::Triangle::isPointInTriangle(const Vector2i& point) const
+// {
+//     for (int i = 0; i < 3; i++)
+//     {
+//         Vector2i edgeVector = {(int)vertices[(i + 1) % 3].x - (int)vertices[i].x, (int)vertices[(i + 1) % 3].y - (int)vertices[i].y};
+//         Vector2i pointVector = {point.x - (int)vertices[i].x, point.y - (int)vertices[i].y};
 
-        int crossProduct = edgeVector.x * pointVector.y - pointVector.x * edgeVector.y;
-        if (crossProduct < 0)
-            return false;
-    }
-    return true;
-}
+//         int crossProduct = edgeVector.x * pointVector.y - pointVector.x * edgeVector.y;
+//         if (crossProduct < 0)
+//             return false;
+//     }
+//     return true;
+// }

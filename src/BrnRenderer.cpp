@@ -125,7 +125,7 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
 
             // Draw triangle
             drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, lightStrength);
-            // renderer.drawTriangleToPixelBuffer(clippedProjectedTriangle, 100, 100, 100);
+            // drawTriangleToPixelBuffer(clippedProjectedTriangle);
         }
     }
 
@@ -170,15 +170,17 @@ void brn::BrnRenderer::drawTriangleToPixelBuffer(const Triangle& tri)
 void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, float lightStrength)
 {
     // Get area of triangle
-    int x_min = std::min(std::min((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
-    int x_max = std::max(std::max((int)tri.vertices[0].x, (int)tri.vertices[1].x), (int)tri.vertices[2].x);
-    int y_min = std::min(std::min((int)tri.vertices[0].y, (int)tri.vertices[1].y), (int)tri.vertices[2].y);
-    int y_max = std::max(std::max((int)tri.vertices[0].y, (int)tri.vertices[1].y), (int)tri.vertices[2].y);
+    int x_min = floor(std::min(std::min(tri.vertices[0].x, tri.vertices[1].x), tri.vertices[2].x));
+    int x_max = floor(std::max(std::max(tri.vertices[0].x, tri.vertices[1].x), tri.vertices[2].x));
+    int y_min = ceil(std::min(std::min(tri.vertices[0].y, tri.vertices[1].y), tri.vertices[2].y));
+    int y_max = ceil(std::max(std::max(tri.vertices[0].y, tri.vertices[1].y), tri.vertices[2].y));
 
-    // Calculate average triangle depth
-    float depth = (tri.vertices[0].w + tri.vertices[1].w + tri.vertices[2].w) / 3;
+    float triangleArea = triangleEdgeCrossProduct({tri.vertices[0].x, tri.vertices[0].y}, {tri.vertices[1].x, tri.vertices[1].y},
+        {tri.vertices[2].x, tri.vertices[2].y});
 
-    // std::cout << tri.vertices[0].r << " " << tri.vertices[0].g << " " << tri.vertices[0].b << std::endl;
+    float edgeBias0 = isTriangleTopOrLeftEdge({tri.vertices[0].x, tri.vertices[0].y}, {tri.vertices[1].x, tri.vertices[1].y}) ? 0 : -1;
+    float edgeBias1 = isTriangleTopOrLeftEdge({tri.vertices[1].x, tri.vertices[1].y}, {tri.vertices[2].x, tri.vertices[2].y}) ? 0 : -1;
+    float edgeBias2 = isTriangleTopOrLeftEdge({tri.vertices[2].x, tri.vertices[2].y}, {tri.vertices[0].x, tri.vertices[0].y}) ? 0 : -1;
 
     // Draw pixels in triangle
     for (int y = y_min; y < y_max; y++)
@@ -190,22 +192,52 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
             if (x < 0 || x > SCREEN_WIDTH - 1)
                 continue;
             
-            if ((*depthBuffer)[x + y * SCREEN_WIDTH] < depth)
-                continue;
-            
             // Test if pixel is in triangle using cross product
-            if (tri.isPointInTriangle({x, y}))
+            float cross0 = triangleEdgeCrossProduct({tri.vertices[0].x, tri.vertices[0].y}, {tri.vertices[1].x, tri.vertices[1].y}, {(float)x, (float)y}) + edgeBias0;
+            float cross1 = triangleEdgeCrossProduct({tri.vertices[1].x, tri.vertices[1].y}, {tri.vertices[2].x, tri.vertices[2].y}, {(float)x, (float)y}) + edgeBias1;
+            float cross2 = triangleEdgeCrossProduct({tri.vertices[2].x, tri.vertices[2].y}, {tri.vertices[0].x, tri.vertices[0].y}, {(float)x, (float)y}) + edgeBias2;
+
+            if (cross0 >= 0 && cross1 >= 0 && cross2 >= 0)
             {
+                // Interpolate vertex values using barycentric coordinates
+                float pointWeight0 = cross0 / triangleArea;
+                float pointWeight1 = cross1 / triangleArea;
+                float pointWeight2 = cross2 / triangleArea;
+
+                float depth = pointWeight0 * tri.vertices[2].w + pointWeight1 * tri.vertices[0].w + pointWeight2 * tri.vertices[1].w;
+
+                int colourR = pointWeight0 * tri.vertices[2].r + pointWeight1 * tri.vertices[0].r + pointWeight2 * tri.vertices[1].r;
+                int colourG = pointWeight0 * tri.vertices[2].g + pointWeight1 * tri.vertices[0].g + pointWeight2 * tri.vertices[1].g;
+                int colourB = pointWeight0 * tri.vertices[2].b + pointWeight1 * tri.vertices[0].b + pointWeight2 * tri.vertices[1].b;
+
+                if ((*depthBuffer)[x + y * SCREEN_WIDTH] < depth)
+                    continue;
+
                 // Draw pixel to buffer
                 int pixel = x * 4 + y * SCREEN_WIDTH * 4;
-                (*pixelBuffer)[pixel] = (int)((float)(tri.vertices[0].r) * lightStrength);
-                (*pixelBuffer)[pixel + 1] = (int)((float)(tri.vertices[0].g) * lightStrength);
-                (*pixelBuffer)[pixel + 2] = (int)((float)(tri.vertices[0].b) * lightStrength);
+                (*pixelBuffer)[pixel] = round(colourR * lightStrength);
+                (*pixelBuffer)[pixel + 1] = round(colourG * lightStrength);
+                (*pixelBuffer)[pixel + 2] = round(colourB * lightStrength);
                 // Draw to depth buffer
                 (*depthBuffer)[x + y * SCREEN_WIDTH] = depth;
             }
         }
     }
+}
+
+float brn::BrnRenderer::triangleEdgeCrossProduct(const Vector2& v1, const Vector2& v2, const Vector2& point)
+{
+    Vector2 edgeVector = {v2.x - v1.x, v2.y - v1.y};
+    Vector2 pointVector = {point.x - v1.x, point.y - v1.y};
+
+    return (edgeVector.x * pointVector.y - pointVector.x * edgeVector.y);
+}
+
+bool brn::BrnRenderer::isTriangleTopOrLeftEdge(const Vector2& v1, const Vector2& v2)
+{
+    Vector2 edge = {v2.x - v1.x, v2.y - v1.y};
+
+    return (edge.y == 0 && edge.x > 0) || edge.y < 0;
 }
 
 void brn::BrnRenderer::setCamera(const Vector3& position, const Vector3& rotation)
