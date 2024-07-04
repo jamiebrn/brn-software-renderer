@@ -18,16 +18,21 @@ brn::BrnRenderer::BrnRenderer(std::string title)
     pixelBuffer = new std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>;
     depthBuffer = new std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>;
 
+    // Reset values
+    cameraPosition = {0, 0, 0};
+    cameraRotation = {0, 0, 0};
+    lightDirection = {0, 0, -1};
+
     clearScreen();
 }
 
-void brn::BrnRenderer::clearPixelBuffer()
+void brn::BrnRenderer::clearPixelBuffer(uint8_t r, uint8_t g, uint8_t b)
 {
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT * 4; i += 4)
     {
-        (*pixelBuffer)[i] = 0;
-        (*pixelBuffer)[i + 1] = 0;
-        (*pixelBuffer)[i + 2] = 0;
+        (*pixelBuffer)[i] = r;
+        (*pixelBuffer)[i + 1] = g;
+        (*pixelBuffer)[i + 2] = b;
         (*pixelBuffer)[i + 3] = 255;
     }
 }
@@ -79,11 +84,9 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
         // Face lighting
         brn::Vector3 faceNormal = transformedTriangle.calculateNormal();
 
-        brn::Vector3 lightVector = {0, 0, -1};
-
         float normalLength = sqrt(faceNormal.x * faceNormal.x + faceNormal.y * faceNormal.y + faceNormal.z * faceNormal.z);
         faceNormal = {faceNormal.x / normalLength, faceNormal.y / normalLength, faceNormal.z / normalLength};
-        float dotProduct = lightVector.x * faceNormal.x + lightVector.y * faceNormal.y + lightVector.z * faceNormal.z;
+        float dotProduct = lightDirection.x * faceNormal.x + lightDirection.y * faceNormal.y + lightDirection.z * faceNormal.z;
 
         // Light strength between 1 and 0.5
         float lightStrength = (dotProduct + 1) * 0.25 + 0.5;
@@ -211,10 +214,18 @@ void brn::BrnRenderer::setCamera(const Vector3& position, const Vector3& rotatio
     cameraRotation = rotation;
 }
 
-void brn::BrnRenderer::clearScreen()
+void brn::BrnRenderer::setLightDirection(const Vector3& direction)
+{
+    float length = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+    lightDirection.x = direction.x / length;
+    lightDirection.y = direction.y / length;
+    lightDirection.z = direction.z / length;
+}
+
+void brn::BrnRenderer::clearScreen(uint8_t r, uint8_t g, uint8_t b)
 {
     window.clear();
-    clearPixelBuffer();
+    clearPixelBuffer(r, g, b);
     clearDepthBuffer();
 }
 

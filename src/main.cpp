@@ -16,33 +16,19 @@ int main()
     srand(time(NULL));
 
     brn::BrnRenderer renderer;
+    renderer.setLightDirection({0, -0.75, -1});
 
     sf::Clock clock;
 
-    brn::Mesh cubeMeshRed = brn::createCubeMesh(1, 1, 1, 255, 0, 0);
-    brn::Mesh cubeMeshGreen = brn::createCubeMesh(1, 1, 1, 0, 255, 0);
-    brn::Mesh cubeMeshBlue = brn::createCubeMesh(1, 1, 1, 0, 0, 255);
     brn::Mesh cubeMeshWhite = brn::createCubeMesh(1, 1, 1, 255, 255, 255);
-
-    std::vector<std::array<brn::Vector3, 4>> cubes;
 
     brn::Vector3 cameraPos = {0, 0, 0};
     brn::Vector3 cameraRot = {0, 0, 0};
-
-    float totalTime = 0;
 
     while (renderer.windowOpen())
     {
 
         float dt = clock.restart().asSeconds();
-
-        totalTime += dt;
-        if (totalTime >= 0.01)
-        {
-            totalTime = 0;
-            cubes.push_back({{{0, -10, -30}, {(float)(rand() % 25) - 12, (float)(rand() % 20) + 25, (float)(rand() % 25) - 12},
-                {(float)(rand() % 7), (float)(rand() % 7), (float)(rand() % 7)}, {(float)(rand() % 4), 0, 0}}});
-        }
 
         for (auto event = sf::Event{}; renderer.getWindow().pollEvent(event);)
         {
@@ -69,32 +55,9 @@ int main()
         // Update camera
         renderer.setCamera(cameraPos, cameraRot);
 
-        renderer.clearScreen();
+        renderer.clearScreen(40, 40, 40);
 
-        for (int i = 0; i < cubes.size(); i++)
-        {
-            std::array<brn::Vector3, 4>& cube = cubes[i];
-
-            // Apply physics
-            cube[0].x += cube[1].x * dt;
-            cube[0].y += cube[1].y * dt;
-            cube[0].z += cube[1].z * dt;
-            cube[1].y -= 100 * dt;
-
-            if (cube[0].y < -50)
-            {
-                cubes.erase(cubes.begin() + i);
-                i--;
-                continue;
-            }
-
-            // Draw cube
-            if (cube[3].x == 0) renderer.drawMesh(cubeMeshRed, cube[0], cube[2], {1, 1, 1});
-            else if (cube[3].x == 1) renderer.drawMesh(cubeMeshGreen, cube[0], cube[2], {1, 1, 1});
-            else if (cube[3].x == 2) renderer.drawMesh(cubeMeshBlue, cube[0], cube[2], {1, 1, 1});
-            else if (cube[3].x == 3) renderer.drawMesh(cubeMeshWhite, cube[0], cube[2], {1, 1, 1});
-
-        }
+        renderer.drawMesh(cubeMeshWhite, {0, 0, -10}, {0, 0, 0}, {4, 4, 4});
 
         renderer.updateScreen();
 

@@ -10,6 +10,7 @@
 #include <math.h>
 #include <iostream>
 #include <queue>
+#include <cstdint>
 
 #include "Mathematics/Vertex.hpp"
 #include "Mathematics/Triangle.hpp"
@@ -36,8 +37,9 @@ public:
     void drawFilledTriangleToPixelBuffer(const Triangle& tri, float lightStrength = 1.0f);
 
     void setCamera(const Vector3& position, const Vector3& rotation);
+    void setLightDirection(const Vector3& direction);
     
-    void clearScreen();
+    void clearScreen(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
     void updateScreen();
 
     bool windowOpen();
@@ -49,7 +51,7 @@ public:
     void closeWindow();
 
 private:
-    void clearPixelBuffer();
+    void clearPixelBuffer(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
     void clearDepthBuffer();
 
 private:
@@ -60,6 +62,8 @@ private:
 
     Vector3 cameraPosition;
     Vector3 cameraRotation;
+
+    Vector3 lightDirection;
 
     sf::RenderWindow window;
 
