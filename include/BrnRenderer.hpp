@@ -1,8 +1,8 @@
 #pragma once
 
-#define SCREEN_WIDTH 300
-#define SCREEN_HEIGHT 200
-#define SCREEN_RENDER_SCALE 4
+#define SCREEN_WIDTH 600
+#define SCREEN_HEIGHT 400
+#define SCREEN_RENDER_SCALE 2
 
 #include <SFML/Graphics.hpp>
 #include <string>

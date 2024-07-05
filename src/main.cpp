@@ -74,7 +74,7 @@ int main()
         // {
         //     renderer.drawMesh(pyramidMesh, pos, {M_PI, time, 0}, {1, 1, 1});
         // }
-        renderer.drawMesh(cubeMesh, {0, 0, -10}, {0, time, time / 3.0f}, {3, 3, 3});
+        // renderer.drawMesh(cubeMesh, {0, 0, -10}, {0, time, time / 3.0f}, {3, 3, 3});
         renderer.drawMesh(cubeMeshRed, {-2, 2, -10}, {0, time + 1.2f, time / 3.0f + 2.0f}, {3, 3, 3});
 
         renderer.updateScreen();
