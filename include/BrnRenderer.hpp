@@ -19,6 +19,7 @@
 #include "Renderer/Clipping.hpp"
 #include "Renderer/Projection.hpp"
 #include "Renderer/Rotation.hpp"
+#include "Renderer/Colour.hpp"
 
 namespace brn
 {
@@ -32,6 +33,7 @@ public:
 
     void drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale, sf::Image* texture = nullptr);
 
+    void drawPixelToBuffer(const Vector2i& position, const Colour& colour, float depth = 0);
     void drawLineToPixelBuffer(const Vertex& a, const Vertex& b);
     void drawTriangleToPixelBuffer(const Triangle& tri);
     void drawFilledTriangleToPixelBuffer(const Triangle& tri, float lightStrength = 1.0f, sf::Image* texture = nullptr);
@@ -57,7 +59,7 @@ private:
     float triangleEdgeCrossProduct(const Vector2& v1, const Vector2& v2, const Vector2& point);
     bool isTriangleTopOrLeftEdge(const Vector2& v1, const Vector2& v2);
 
-    Vector3 sampleFromTexture(sf::Image* texture, float u, float v);
+    Colour sampleFromTexture(sf::Image* texture, float u, float v);
 
 private:
     std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer;

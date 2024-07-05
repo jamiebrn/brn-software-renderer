@@ -135,6 +135,20 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
 
 }
 
+void brn::BrnRenderer::drawPixelToBuffer(const Vector2i& position, const Colour& colour, float depth = 0)
+{
+    // Get pixel position
+    int pixel = position.x * 4 + position.y * SCREEN_WIDTH * 4;
+
+    // Set pixel colour
+    (*pixelBuffer)[pixel] = colour.r;
+    (*pixelBuffer)[pixel + 1] = colour.g;
+    (*pixelBuffer)[pixel + 2] = colour.b;
+
+    // Set depth buffer
+    (*depthBuffer)[position.x + position.y * SCREEN_WIDTH] = depth;
+}
+
 void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b)
 {
     int dx = (unsigned int)b.x - (unsigned int)a.x;
@@ -149,10 +163,10 @@ void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b)
         if (x > 0 && x < SCREEN_WIDTH - 1 && y > 0 && y < SCREEN_HEIGHT - 1)
         {
             // Draw pixel to buffer
-            int pixel = (int)(round(x) * 4) + (int)(round(y) * SCREEN_WIDTH * 4);
-            (*pixelBuffer)[pixel] = a.r;
-            (*pixelBuffer)[pixel + 1] = a.g;
-            (*pixelBuffer)[pixel + 2] = a.b;
+            Vector2i position = {(int)round(x), (int)round(y)};
+            Colour colour = {a.r, a.g, a.b};
+
+            drawPixelToBuffer(position, colour);
         }
         x += xInc;
         y += yInc;
@@ -219,6 +233,7 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
             cross1 += cross1IncX;
             cross2 += cross2IncX;
 
+            // If point is inside triangle, attempt to draw point
             if (cross0 >= 0 && cross1 >= 0 && cross2 >= 0)
             {
                 // Interpolate vertex values using barycentric coordinates
@@ -226,12 +241,15 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
                 float pointWeight1 = cross1 / triangleArea;
                 float pointWeight2 = cross2 / triangleArea;
 
+                // Calculate depth of point
                 float depth = pointWeight0 * tri.vertices[2].w + pointWeight1 * tri.vertices[0].w + pointWeight2 * tri.vertices[1].w;
 
+                // If point already drawn in buffer is closer to camera, don't draw this point
                 if ((*depthBuffer)[x + y * SCREEN_WIDTH] < depth)
                     continue;
-                
-                int colourR, colourG, colourB;
+
+                // Colour calculations
+                Colour colour;
                 if (texture)
                 {
                     // Interpolate reciprocal of depth value
@@ -243,26 +261,23 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
                     float v = (pointWeight0 * tri.vertices[2].v + pointWeight1 * tri.vertices[0].v + pointWeight2 * tri.vertices[1].v) / inverseZ;
 
                     // Sample texture at UV
-                    Vector3 colour = sampleFromTexture(texture, u, v);
-                    colourR = (int)colour.x;
-                    colourG = (int)colour.y;
-                    colourB = (int)colour.z;
+                    colour = sampleFromTexture(texture, u, v);
                 }
                 else
                 {
                     // Interpolate colour
-                    colourR = pointWeight0 * tri.vertices[2].r + pointWeight1 * tri.vertices[0].r + pointWeight2 * tri.vertices[1].r;
-                    colourG = pointWeight0 * tri.vertices[2].g + pointWeight1 * tri.vertices[0].g + pointWeight2 * tri.vertices[1].g;
-                    colourB = pointWeight0 * tri.vertices[2].b + pointWeight1 * tri.vertices[0].b + pointWeight2 * tri.vertices[1].b;
+                    colour.r = pointWeight0 * tri.vertices[2].r + pointWeight1 * tri.vertices[0].r + pointWeight2 * tri.vertices[1].r;
+                    colour.g = pointWeight0 * tri.vertices[2].g + pointWeight1 * tri.vertices[0].g + pointWeight2 * tri.vertices[1].g;
+                    colour.b = pointWeight0 * tri.vertices[2].b + pointWeight1 * tri.vertices[0].b + pointWeight2 * tri.vertices[1].b;
                 }
 
-                // Draw pixel to buffer
-                int pixel = x * 4 + y * SCREEN_WIDTH * 4;
-                (*pixelBuffer)[pixel] = round(colourR * lightStrength);
-                (*pixelBuffer)[pixel + 1] = round(colourG * lightStrength);
-                (*pixelBuffer)[pixel + 2] = round(colourB * lightStrength);
-                // Draw to depth buffer
-                (*depthBuffer)[x + y * SCREEN_WIDTH] = depth;
+                // Apply lighting
+                colour.r = colour.r * lightStrength;
+                colour.g = colour.g * lightStrength;
+                colour.b = colour.b * lightStrength;
+
+                // Draw pixel to buffer with position, colour, and depth
+                drawPixelToBuffer({x, y}, colour, depth);
             }
 
             
@@ -285,11 +300,11 @@ bool brn::BrnRenderer::isTriangleTopOrLeftEdge(const Vector2& v1, const Vector2&
     return (edge.y == 0 && edge.x > 0) || edge.y < 0;
 }
 
-brn::Vector3 brn::BrnRenderer::sampleFromTexture(sf::Image* texture, float u, float v)
+brn::Colour brn::BrnRenderer::sampleFromTexture(sf::Image* texture, float u, float v)
 {
     sf::Vector2u textureSize = texture->getSize();
-    sf::Color colour = texture->getPixel((int)floor(textureSize.x * u), (int)floor(textureSize.y * v));
-    return {(float)colour.r, (float)colour.g, (float)colour.b};
+    sf::Color colour = texture->getPixel(floor(textureSize.x * u), floor(textureSize.y * v));
+    return {colour.r, colour.g, colour.b};
 }
 
 void brn::BrnRenderer::setCamera(const Vector3& position, const Vector3& rotation)
