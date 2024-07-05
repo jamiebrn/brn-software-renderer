@@ -1,9 +1,5 @@
 #pragma once
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
-#define SCREEN_RENDER_SCALE 1
-
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <array>
@@ -28,8 +24,7 @@ class BrnRenderer
 {
 
 public:
-    // BrnRenderer(int screenWidth, int screenHeight, int renderWidth, int renderHeight, std::string title);
-    BrnRenderer(std::string title = "BrnRenderer");
+    BrnRenderer(unsigned int screenWidth, unsigned int screenHeight, unsigned int screenRenderScale = 1, std::string title = "BrnRenderer");
 
     void drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale, sf::Image* texture = nullptr);
 
@@ -62,8 +57,13 @@ private:
     Colour sampleFromTexture(sf::Image* texture, float u, float v);
 
 private:
-    std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer;
-    std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>* depthBuffer;
+    // std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer;
+    // std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>* depthBuffer;
+
+    int screenWidth, screenHeight, screenRenderScale;
+
+    sf::Uint8* pixelBuffer;
+    float* depthBuffer;
 
     static const std::array<brn::Plane, 6> clippingPlanes;
 

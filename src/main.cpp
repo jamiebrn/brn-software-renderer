@@ -17,25 +17,30 @@ int main()
 {
     srand(time(NULL));
 
-    brn::BrnRenderer renderer;
+    brn::BrnRenderer renderer(1280, 720, 1);
     renderer.setLightDirection({0, -0.75, -1});
 
     sf::Clock clock;
 
-    brn::Mesh cubeMesh = brn::createCubeMesh(1, 1, 1, 200, 200, 200);
-    brn::Mesh cubeMeshRed = brn::createCubeMesh(1, 1, 1, 220, 60, 60);
-    brn::Mesh pyramidMesh = brn::createPyramidSqMesh(1, 1, 1, 255, 255, 50);
+    brn::Mesh cubeMesh = brn::createCubeMesh();
+    brn::Mesh pyramidMesh = brn::createPyramidSqMesh();
+    brn::Mesh groundMesh = brn::createPlaneMesh(4, 4);
+    brn::Mesh wallMesh = brn::createPlaneMesh(3, 8);
 
-    sf::Image* testTexture = new sf::Image;
-    testTexture->loadFromFile("brick.png");
+    sf::Image* dirtTexture = new sf::Image;
+    dirtTexture->loadFromFile("dirt.png");
+    sf::Image* brickTexture = new sf::Image;
+    brickTexture->loadFromFile("brick.png");
+    sf::Image* diamondTexture = new sf::Image;
+    diamondTexture->loadFromFile("diamond.png");
 
     std::vector<brn::Vector3> pyramidPos;
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 100; i++)
     {
-        pyramidPos.push_back({(float)(rand() % 80 - 40), 3, (float)(rand() % 80 - 80)});
+        pyramidPos.push_back({(float)(rand() % 20 - 10), 3, (float)(rand() % 20 - 10)});
     }
 
-    brn::Vector3 cameraPos = {0, 0, 0};
+    brn::Vector3 cameraPos = {0, -5, 0};
     brn::Vector3 cameraRot = {0, 0, 0};
 
     float time = 0;
@@ -60,7 +65,7 @@ int main()
         cameraPos.x += cos(cameraRot.y) * ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::D) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::A)) * dt * 10;
         cameraPos.z += -sin(cameraRot.y) * ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::D) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::A)) * dt * 10;
 
-        cameraPos.y += ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) * dt * 20;
+        // cameraPos.y += ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) * dt * 20;
 
 
         cameraRot.x = std::min(3.14f / 2.3f, std::max(
@@ -73,12 +78,11 @@ int main()
 
         renderer.clearScreen(40, 40, 40);
 
-        for (brn::Vector3 pos : pyramidPos)
-        {
-            renderer.drawMesh(pyramidMesh, pos, {M_PI, time, 0}, {1, 1, 1});
-        }
-        renderer.drawMesh(cubeMesh, {0, 0, -10}, {0, time, time / 3.0f}, {3, 3, 3});
-        renderer.drawMesh(cubeMeshRed, {-2, 2, -10}, {0, time * 1.2f, time / 2.0f}, {3, 3, 3}, testTexture);
+        renderer.drawMesh(groundMesh, {0, 0, 0}, {M_PI / 2, 0, 0}, {10, 10, 1}, dirtTexture);
+        renderer.drawMesh(wallMesh, {0, 7.5, 20}, {0, 0, 0}, {5, 5, 1}, brickTexture);
+        renderer.drawMesh(wallMesh, {0, 7.5, -20}, {0, M_PI, 0}, {5, 5, 1}, brickTexture);
+        renderer.drawMesh(wallMesh, {20, 7.5, 0}, {0, M_PI / 2, 0}, {5, 5, 1}, brickTexture);
+        renderer.drawMesh(wallMesh, {-20, 7.5, 0}, {0, -M_PI / 2, 0}, {5, 5, 1}, brickTexture);
 
         renderer.updateScreen();
 
@@ -86,7 +90,8 @@ int main()
 
     }
 
-    // delete testTexture;
-    // testTexture = nullptr;
+    delete dirtTexture;
+    delete brickTexture;
+    delete diamondTexture;
 
 }

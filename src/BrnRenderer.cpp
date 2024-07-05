@@ -9,14 +9,18 @@ const std::array<brn::Plane, 6> brn::BrnRenderer::clippingPlanes = {
     Plane({0, 0, 1}, {0, 0, -1})
 };
 
-brn::BrnRenderer::BrnRenderer(std::string title)
+brn::BrnRenderer::BrnRenderer(unsigned int screenWidth, unsigned int screenHeight, unsigned int screenRenderScale, std::string title)
 {
     // Create window
-    window.create({SCREEN_WIDTH * SCREEN_RENDER_SCALE, SCREEN_HEIGHT * SCREEN_RENDER_SCALE}, title);
+    window.create({screenWidth * screenRenderScale, screenHeight * screenRenderScale}, title);
+
+    this->screenWidth = screenWidth;
+    this->screenHeight = screenHeight;
+    this->screenRenderScale = screenRenderScale;
 
     // Initialise pixel and depth buffers
-    pixelBuffer = new std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>;
-    depthBuffer = new std::array<float, SCREEN_WIDTH * SCREEN_HEIGHT>;
+    pixelBuffer = new sf::Uint8[screenWidth * screenHeight * 4];
+    depthBuffer = new float[screenWidth * screenHeight];
 
     // Reset values
     cameraPosition = {0, 0, 0};
@@ -28,18 +32,21 @@ brn::BrnRenderer::BrnRenderer(std::string title)
 
 void brn::BrnRenderer::clearPixelBuffer(uint8_t r, uint8_t g, uint8_t b)
 {
-    for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT * 4; i += 4)
+    for (int i = 0; i < screenWidth * screenHeight * 4; i += 4)
     {
-        (*pixelBuffer)[i] = r;
-        (*pixelBuffer)[i + 1] = g;
-        (*pixelBuffer)[i + 2] = b;
-        (*pixelBuffer)[i + 3] = 255;
+        pixelBuffer[i] = r;
+        pixelBuffer[i + 1] = g;
+        pixelBuffer[i + 2] = b;
+        pixelBuffer[i + 3] = 255;
     }
 }
 
 void brn::BrnRenderer::clearDepthBuffer()
 {
-    (*depthBuffer).fill(INFINITY);
+    for (int i = 0; i < screenWidth * screenHeight; i++)
+    {
+        depthBuffer[i] = INFINITY;
+    }
 }
 
 void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale, sf::Image* texture)
@@ -76,7 +83,7 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
             transformedVertex = rotateVertexX(transformedVertex, -cameraRotation.x);
             
             // To clip space
-            brn::vertexToClipSpace(transformedVertex, SCREEN_WIDTH, SCREEN_HEIGHT, 3.14 / 2.0, 0.1, 100);
+            brn::vertexToClipSpace(transformedVertex, screenWidth, screenHeight, 3.14 / 2.0, 0.1, 100);
 
             clipSpaceTriangle.vertices[j] = transformedVertex;
         }
@@ -88,8 +95,8 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
         faceNormal = {faceNormal.x / normalLength, faceNormal.y / normalLength, faceNormal.z / normalLength};
         float dotProduct = lightDirection.x * faceNormal.x + lightDirection.y * faceNormal.y + lightDirection.z * faceNormal.z;
 
-        // Light strength between 1 and 0.5
-        float lightStrength = (dotProduct + 1) * 0.25 + 0.5;
+        // Light strength between 1 and 0.35
+        float lightStrength = (dotProduct + 1) * (0.65 / 2) + 0.35;
 
         // Clip triangle
         std::queue<brn::Triangle> triangles;
@@ -116,8 +123,8 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
                 clippedProjectedTriangle.vertices[vertex].v /= clippedProjectedTriangle.vertices[vertex].w;
 
                 // To screen space
-                clippedProjectedTriangle.vertices[vertex].x = clippedProjectedTriangle.vertices[vertex].x * SCREEN_WIDTH / 2.0 + SCREEN_WIDTH / 2.0;
-                clippedProjectedTriangle.vertices[vertex].y = clippedProjectedTriangle.vertices[vertex].y * SCREEN_HEIGHT / 2.0 + SCREEN_HEIGHT / 2.0;
+                clippedProjectedTriangle.vertices[vertex].x = clippedProjectedTriangle.vertices[vertex].x * screenWidth / 2.0 + screenWidth / 2.0;
+                clippedProjectedTriangle.vertices[vertex].y = clippedProjectedTriangle.vertices[vertex].y * screenHeight / 2.0 + screenHeight / 2.0;
             }
 
             triangles.pop();
@@ -135,18 +142,18 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
 
 }
 
-void brn::BrnRenderer::drawPixelToBuffer(const Vector2i& position, const Colour& colour, float depth = 0)
+void brn::BrnRenderer::drawPixelToBuffer(const Vector2i& position, const Colour& colour, float depth)
 {
     // Get pixel position
-    int pixel = position.x * 4 + position.y * SCREEN_WIDTH * 4;
+    int pixel = position.x * 4 + position.y * screenWidth * 4;
 
     // Set pixel colour
-    (*pixelBuffer)[pixel] = colour.r;
-    (*pixelBuffer)[pixel + 1] = colour.g;
-    (*pixelBuffer)[pixel + 2] = colour.b;
+    pixelBuffer[pixel] = colour.r;
+    pixelBuffer[pixel + 1] = colour.g;
+    pixelBuffer[pixel + 2] = colour.b;
 
     // Set depth buffer
-    (*depthBuffer)[position.x + position.y * SCREEN_WIDTH] = depth;
+    depthBuffer[position.x + position.y * screenWidth] = depth;
 }
 
 void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b)
@@ -160,7 +167,7 @@ void brn::BrnRenderer::drawLineToPixelBuffer(const Vertex& a, const Vertex& b)
 
     for (int i = 0; i <= steps; i++)
     {
-        if (x > 0 && x < SCREEN_WIDTH - 1 && y > 0 && y < SCREEN_HEIGHT - 1)
+        if (x > 0 && x < screenWidth - 1 && y > 0 && y < screenHeight - 1)
         {
             // Draw pixel to buffer
             Vector2i position = {(int)round(x), (int)round(y)};
@@ -203,9 +210,9 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
     float cross1IncY = (tri.vertices[2].x - tri.vertices[1].x);
     float cross2IncY = (tri.vertices[0].x - tri.vertices[2].x);
 
-    float edgeBias0 = isTriangleTopOrLeftEdge({tri.vertices[1].x, tri.vertices[1].y}, {tri.vertices[2].x, tri.vertices[2].y}) ? 0 : -0.0001;
-    float edgeBias1 = isTriangleTopOrLeftEdge({tri.vertices[0].x, tri.vertices[0].y}, {tri.vertices[1].x, tri.vertices[1].y}) ? 0 : -0.0001;
-    float edgeBias2 = isTriangleTopOrLeftEdge({tri.vertices[2].x, tri.vertices[2].y}, {tri.vertices[0].x, tri.vertices[0].y}) ? 0 : -0.0001;
+    float edgeBias0 = isTriangleTopOrLeftEdge({tri.vertices[1].x, tri.vertices[1].y}, {tri.vertices[2].x, tri.vertices[2].y}) ? 0 : -0.001;
+    float edgeBias1 = isTriangleTopOrLeftEdge({tri.vertices[0].x, tri.vertices[0].y}, {tri.vertices[1].x, tri.vertices[1].y}) ? 0 : -0.001;
+    float edgeBias2 = isTriangleTopOrLeftEdge({tri.vertices[2].x, tri.vertices[2].y}, {tri.vertices[0].x, tri.vertices[0].y}) ? 0 : -0.001;
 
     float cross0Y = triangleEdgeCrossProduct({tri.vertices[0].x, tri.vertices[0].y}, {tri.vertices[1].x, tri.vertices[1].y}, {(float)x_min, (float)y_min}) + edgeBias0;
     float cross1Y = triangleEdgeCrossProduct({tri.vertices[1].x, tri.vertices[1].y}, {tri.vertices[2].x, tri.vertices[2].y}, {(float)x_min, (float)y_min}) + edgeBias1;
@@ -222,11 +229,11 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
         cross1Y += cross1IncY;
         cross2Y += cross2IncY;
 
-        if (y < 0 || y > SCREEN_HEIGHT - 1)
+        if (y < 0 || y > screenHeight - 1)
             continue;
         for (int x = x_min; x < x_max; x++)
         {
-            if (x < 0 || x > SCREEN_WIDTH - 1)
+            if (x < 0 || x > screenWidth - 1)
                 continue;
             
             cross0 += cross0IncX;
@@ -242,10 +249,10 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
                 float pointWeight2 = cross2 / triangleArea;
 
                 // Calculate depth of point
-                float depth = pointWeight0 * tri.vertices[2].w + pointWeight1 * tri.vertices[0].w + pointWeight2 * tri.vertices[1].w;
+                float depth = pointWeight0 * tri.vertices[2].z + pointWeight1 * tri.vertices[0].z + pointWeight2 * tri.vertices[1].z;
 
                 // If point already drawn in buffer is closer to camera, don't draw this point
-                if ((*depthBuffer)[x + y * SCREEN_WIDTH] < depth)
+                if (depthBuffer[x + y * screenWidth] < depth)
                     continue;
 
                 // Colour calculations
@@ -303,7 +310,7 @@ bool brn::BrnRenderer::isTriangleTopOrLeftEdge(const Vector2& v1, const Vector2&
 brn::Colour brn::BrnRenderer::sampleFromTexture(sf::Image* texture, float u, float v)
 {
     sf::Vector2u textureSize = texture->getSize();
-    sf::Color colour = texture->getPixel(floor(textureSize.x * u), floor(textureSize.y * v));
+    sf::Color colour = texture->getPixel((int)floor(textureSize.x * u) % textureSize.x, (int)floor(textureSize.y * v) % textureSize.y);
     return {colour.r, colour.g, colour.b};
 }
 
@@ -331,14 +338,14 @@ void brn::BrnRenderer::clearScreen(uint8_t r, uint8_t g, uint8_t b)
 void brn::BrnRenderer::updateScreen()
 {
     sf::Image renderImage;
-    renderImage.create(SCREEN_WIDTH, SCREEN_HEIGHT, pixelBuffer->data());
+    renderImage.create(screenWidth, screenHeight, pixelBuffer);
 
     sf::Texture texture;
     texture.loadFromImage(renderImage);
     
     sf::Sprite sprite;
     sprite.setTexture(texture, true);
-    sprite.setScale(sf::Vector2f(SCREEN_RENDER_SCALE, SCREEN_RENDER_SCALE));
+    sprite.setScale(sf::Vector2f(screenRenderScale, screenRenderScale));
 
     window.draw(sprite);
 
@@ -365,8 +372,8 @@ void brn::BrnRenderer::closeWindow()
     window.close();
 
     // Free buffer memory
-    delete pixelBuffer;
+    delete [] pixelBuffer;
     pixelBuffer = nullptr;
-    delete depthBuffer;
+    delete [] depthBuffer;
     depthBuffer = nullptr;
 }
