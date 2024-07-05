@@ -26,6 +26,9 @@ int main()
     brn::Mesh cubeMeshRed = brn::createCubeMesh(1, 1, 1, 220, 60, 60);
     brn::Mesh pyramidMesh = brn::createPyramidSqMesh(1, 1, 1, 255, 255, 50);
 
+    sf::Image* testTexture = new sf::Image;
+    testTexture->loadFromFile("brick.png");
+
     std::vector<brn::Vector3> pyramidPos;
     for (int i = 0; i < 20; i++)
     {
@@ -70,16 +73,20 @@ int main()
 
         renderer.clearScreen(40, 40, 40);
 
-        // for (brn::Vector3 pos : pyramidPos)
-        // {
-        //     renderer.drawMesh(pyramidMesh, pos, {M_PI, time, 0}, {1, 1, 1});
-        // }
-        // renderer.drawMesh(cubeMesh, {0, 0, -10}, {0, time, time / 3.0f}, {3, 3, 3});
-        renderer.drawMesh(cubeMeshRed, {-2, 2, -10}, {0, time + 1.2f, time / 3.0f + 2.0f}, {3, 3, 3});
+        for (brn::Vector3 pos : pyramidPos)
+        {
+            renderer.drawMesh(pyramidMesh, pos, {M_PI, time, 0}, {1, 1, 1});
+        }
+        renderer.drawMesh(cubeMesh, {0, 0, -10}, {0, time, time / 3.0f}, {3, 3, 3});
+        renderer.drawMesh(cubeMeshRed, {-2, 2, -10}, {0, time * 1.2f, time / 2.0f}, {3, 3, 3}, testTexture);
 
         renderer.updateScreen();
 
         renderer.setWindowTitle("BrnRenderer - " + std::to_string((int)(1.0 / dt)) + "FPS");
 
     }
+
+    // delete testTexture;
+    // testTexture = nullptr;
+
 }

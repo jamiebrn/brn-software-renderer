@@ -31,6 +31,8 @@ void brn::clipTriangleOnPlane(const Triangle& triangle, const Plane& boundaryPla
             intersection.r = v1.r + interpolate * (v2.r - v1.r);
             intersection.g = v1.g + interpolate * (v2.g - v1.g);
             intersection.b = v1.b + interpolate * (v2.b - v1.b);
+            intersection.u = v1.u + interpolate * (v2.u - v1.u);
+            intersection.v = v1.v + interpolate * (v2.v - v1.v);
             clippedVertices[clippedVertexCount] = intersection;
             clippedVertexCount++;
         }

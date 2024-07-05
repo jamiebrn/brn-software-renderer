@@ -1,8 +1,8 @@
 #pragma once
 
-#define SCREEN_WIDTH 600
-#define SCREEN_HEIGHT 400
-#define SCREEN_RENDER_SCALE 2
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
+#define SCREEN_RENDER_SCALE 1
 
 #include <SFML/Graphics.hpp>
 #include <string>
@@ -30,11 +30,11 @@ public:
     // BrnRenderer(int screenWidth, int screenHeight, int renderWidth, int renderHeight, std::string title);
     BrnRenderer(std::string title = "BrnRenderer");
 
-    void drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale);
+    void drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale, sf::Image* texture = nullptr);
 
     void drawLineToPixelBuffer(const Vertex& a, const Vertex& b);
     void drawTriangleToPixelBuffer(const Triangle& tri);
-    void drawFilledTriangleToPixelBuffer(const Triangle& tri, float lightStrength = 1.0f);
+    void drawFilledTriangleToPixelBuffer(const Triangle& tri, float lightStrength = 1.0f, sf::Image* texture = nullptr);
 
     void setCamera(const Vector3& position, const Vector3& rotation);
     void setLightDirection(const Vector3& direction);
@@ -56,6 +56,8 @@ private:
 
     float triangleEdgeCrossProduct(const Vector2& v1, const Vector2& v2, const Vector2& point);
     bool isTriangleTopOrLeftEdge(const Vector2& v1, const Vector2& v2);
+
+    Vector3 sampleFromTexture(sf::Image* texture, float u, float v);
 
 private:
     std::array<sf::Uint8, SCREEN_WIDTH * SCREEN_HEIGHT * 4>* pixelBuffer;
