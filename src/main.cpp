@@ -17,37 +17,37 @@ int main()
 {
     srand(time(NULL));
 
-    brn::BrnRenderer renderer(1280, 720, 1);
+    brn::BrnRenderer renderer(320, 240, 3);
     renderer.setLightDirection({0, -0.75, -1});
 
     sf::Clock clock;
 
-    brn::Mesh cubeMesh = brn::createCubeMesh();
-    brn::Mesh pyramidMesh = brn::createPyramidSqMesh();
-    brn::Mesh groundMesh = brn::createPlaneMesh(4, 4);
-    brn::Mesh wallMesh = brn::createPlaneMesh(3, 8);
+    // brn::Mesh cubeMesh = brn::createCubeMesh();
+    // brn::Mesh pyramidMesh = brn::createPyramidSqMesh();
+    // brn::Mesh groundMesh = brn::createPlaneMesh(4, 4);
+    // brn::Mesh wallMesh = brn::createPlaneMesh(3, 8);
 
-    brn::Mesh coolMesh = brn::loadMeshFromFile("untitled.obj");
-    brn::Mesh astronaut = brn::loadMeshFromFile("Astronaut.obj");
-    brn::Mesh shuttle = brn::loadMeshFromFile("shuttle.obj");
-    brn::Mesh andy = brn::loadMeshFromFile("andy.obj");
-    brn::Mesh gunMesh = brn::loadMeshFromFile("gun.obj");
+    // brn::Mesh coolMesh = brn::loadMeshFromFile("untitled.obj");
+    // brn::Mesh astronaut = brn::loadMeshFromFile("Astronaut.obj");
+    // brn::Mesh shuttle = brn::loadMeshFromFile("shuttle.obj");
+    // brn::Mesh andy = brn::loadMeshFromFile("andy.obj");
+    // brn::Mesh gunMesh = brn::loadMeshFromFile("gun.obj");
 
-    sf::Image* dirtTexture = new sf::Image;
-    dirtTexture->loadFromFile("dirt.png");
-    sf::Image* brickTexture = new sf::Image;
-    brickTexture->loadFromFile("brick.png");
-    sf::Image* diamondTexture = new sf::Image;
-    diamondTexture->loadFromFile("diamond.png");
+    // sf::Image* dirtTexture = new sf::Image;
+    // dirtTexture->loadFromFile("dirt.png");
+    // sf::Image* brickTexture = new sf::Image;
+    // brickTexture->loadFromFile("brick.png");
+    // sf::Image* diamondTexture = new sf::Image;
+    // diamondTexture->loadFromFile("diamond.png");
 
-    sf::Image* andyTexture = new sf::Image;
-    andyTexture->loadFromFile("Andy_Diffuse.png");
+    // sf::Image* andyTexture = new sf::Image;
+    // andyTexture->loadFromFile("Andy_Diffuse.png");
 
-    sf::Image* astronautTex = new sf::Image;
-    astronautTex->loadFromFile("Astronaut_BaseColor.png");
+    // sf::Image* astronautTex = new sf::Image;
+    // astronautTex->loadFromFile("Astronaut_BaseColor.png");
 
-    sf::Image* shuttleTex = new sf::Image;
-    shuttleTex->loadFromFile("SpaceShuttle_BaseColor.png");
+    // sf::Image* shuttleTex = new sf::Image;
+    // shuttleTex->loadFromFile("SpaceShuttle_BaseColor.png");
 
     brn::Vector3 cameraPos = {0, -5, 0};
     brn::Vector3 cameraRot = {0, 0, 0};
@@ -92,19 +92,15 @@ int main()
 
         renderer.clearScreen(40, 40, 40);
 
-        renderer.drawMesh(astronaut, {0, -10, -10}, {M_PI, time, 0}, {2, 2, 2}, astronautTex);
-        renderer.drawMesh(shuttle, {0, -10, -20}, {M_PI, time, 0}, {0.25, 0.25, 0.25}, shuttleTex);
-        renderer.drawMesh(andy, {0, -10, -10}, {M_PI, time, 0}, {2, 2, 2}, andyTexture);
-        renderer.drawMesh(gunMesh, {0, 0, -10}, {0, 0, 0}, {15, 15, 15});
+        // renderer.drawMesh(astronaut, {0, -10, -10}, {M_PI, time, 0}, {2, 2, 2}, astronautTex);
+        // renderer.drawMesh(shuttle, {0, -10, -20}, {M_PI, time, 0}, {0.25, 0.25, 0.25}, shuttleTex);
+        // renderer.drawMesh(andy, {0, -10, -10}, {M_PI, time, 0}, {2, 2, 2}, andyTexture);
+        // renderer.drawMesh(gunMesh, {0, 0, -10}, {0, 0, 0}, {15, 15, 15});
 
         renderer.updateScreen();
 
         renderer.setWindowTitle("BrnRenderer - " + std::to_string((int)(1.0 / dt)) + "FPS");
 
     }
-
-    delete dirtTexture;
-    delete brickTexture;
-    delete diamondTexture;
 
 }
