@@ -27,6 +27,12 @@ int main()
     brn::Mesh groundMesh = brn::createPlaneMesh(4, 4);
     brn::Mesh wallMesh = brn::createPlaneMesh(3, 8);
 
+    brn::Mesh coolMesh = brn::loadMeshFromFile("untitled.obj");
+    brn::Mesh astronaut = brn::loadMeshFromFile("Astronaut.obj");
+    brn::Mesh shuttle = brn::loadMeshFromFile("shuttle.obj");
+    brn::Mesh andy = brn::loadMeshFromFile("andy.obj");
+    brn::Mesh gunMesh = brn::loadMeshFromFile("gun.obj");
+
     sf::Image* dirtTexture = new sf::Image;
     dirtTexture->loadFromFile("dirt.png");
     sf::Image* brickTexture = new sf::Image;
@@ -34,11 +40,14 @@ int main()
     sf::Image* diamondTexture = new sf::Image;
     diamondTexture->loadFromFile("diamond.png");
 
-    std::vector<brn::Vector3> pyramidPos;
-    for (int i = 0; i < 100; i++)
-    {
-        pyramidPos.push_back({(float)(rand() % 20 - 10), 3, (float)(rand() % 20 - 10)});
-    }
+    sf::Image* andyTexture = new sf::Image;
+    andyTexture->loadFromFile("Andy_Diffuse.png");
+
+    sf::Image* astronautTex = new sf::Image;
+    astronautTex->loadFromFile("Astronaut_BaseColor.png");
+
+    sf::Image* shuttleTex = new sf::Image;
+    shuttleTex->loadFromFile("SpaceShuttle_BaseColor.png");
 
     brn::Vector3 cameraPos = {0, -5, 0};
     brn::Vector3 cameraRot = {0, 0, 0};
@@ -57,6 +66,11 @@ int main()
             {
                 renderer.closeWindow();
             }
+            if (event.type == sf::Event::KeyPressed)
+            {
+                if (event.key.code == sf::Keyboard::P)
+                    renderer.toggleWireframeRender();
+            }
         }
 
         cameraPos.x += sin(cameraRot.y) * ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::W) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::S)) * dt * 10;
@@ -65,7 +79,7 @@ int main()
         cameraPos.x += cos(cameraRot.y) * ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::D) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::A)) * dt * 10;
         cameraPos.z += -sin(cameraRot.y) * ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::D) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::A)) * dt * 10;
 
-        // cameraPos.y += ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) * dt * 20;
+        cameraPos.y += ((float)sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) - (float)sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) * dt * 20;
 
 
         cameraRot.x = std::min(3.14f / 2.3f, std::max(
@@ -78,11 +92,10 @@ int main()
 
         renderer.clearScreen(40, 40, 40);
 
-        renderer.drawMesh(groundMesh, {0, 0, 0}, {M_PI / 2, 0, 0}, {10, 10, 1}, dirtTexture);
-        renderer.drawMesh(wallMesh, {0, 7.5, 20}, {0, 0, 0}, {5, 5, 1}, brickTexture);
-        renderer.drawMesh(wallMesh, {0, 7.5, -20}, {0, M_PI, 0}, {5, 5, 1}, brickTexture);
-        renderer.drawMesh(wallMesh, {20, 7.5, 0}, {0, M_PI / 2, 0}, {5, 5, 1}, brickTexture);
-        renderer.drawMesh(wallMesh, {-20, 7.5, 0}, {0, -M_PI / 2, 0}, {5, 5, 1}, brickTexture);
+        renderer.drawMesh(astronaut, {0, -10, -10}, {M_PI, time, 0}, {2, 2, 2}, astronautTex);
+        renderer.drawMesh(shuttle, {0, -10, -20}, {M_PI, time, 0}, {0.25, 0.25, 0.25}, shuttleTex);
+        renderer.drawMesh(andy, {0, -10, -10}, {M_PI, time, 0}, {2, 2, 2}, andyTexture);
+        renderer.drawMesh(gunMesh, {0, 0, -10}, {0, 0, 0}, {15, 15, 15});
 
         renderer.updateScreen();
 

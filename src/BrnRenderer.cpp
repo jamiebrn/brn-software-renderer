@@ -20,7 +20,9 @@ brn::BrnRenderer::BrnRenderer(unsigned int screenWidth, unsigned int screenHeigh
 
     // Initialise pixel and depth buffers
     pixelBuffer = new sf::Uint8[screenWidth * screenHeight * 4];
-    depthBuffer = new float[screenWidth * screenHeight];
+    depthBuffer = new double[screenWidth * screenHeight];
+
+    wireframeRender = false;
 
     // Reset values
     cameraPosition = {0, 0, 0};
@@ -45,7 +47,7 @@ void brn::BrnRenderer::clearDepthBuffer()
 {
     for (int i = 0; i < screenWidth * screenHeight; i++)
     {
-        depthBuffer[i] = INFINITY;
+        depthBuffer[i] = -INFINITY;
     }
 }
 
@@ -135,8 +137,10 @@ void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const
                 continue;
 
             // Draw triangle
-            drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, lightStrength, texture);
-            // drawTriangleToPixelBuffer(clippedProjectedTriangle);
+            if (wireframeRender)
+                drawTriangleToPixelBuffer(clippedProjectedTriangle);
+            else
+                drawFilledTriangleToPixelBuffer(clippedProjectedTriangle, lightStrength, texture);
         }
     }
 
@@ -249,23 +253,20 @@ void brn::BrnRenderer::drawFilledTriangleToPixelBuffer(const Triangle& tri, floa
                 float pointWeight2 = cross2 / triangleArea;
 
                 // Calculate depth of point
-                float depth = pointWeight0 * tri.vertices[2].z + pointWeight1 * tri.vertices[0].z + pointWeight2 * tri.vertices[1].z;
+                float depth = pointWeight0 / tri.vertices[2].w + pointWeight1 / tri.vertices[0].w + pointWeight2 / tri.vertices[1].w;
 
                 // If point already drawn in buffer is closer to camera, don't draw this point
-                if (depthBuffer[x + y * screenWidth] < depth)
+                if (depthBuffer[x + y * screenWidth] > depth)
                     continue;
 
                 // Colour calculations
                 Colour colour;
                 if (texture)
                 {
-                    // Interpolate reciprocal of depth value
-                    float inverseZ = pointWeight0 * 1.0f / tri.vertices[2].w + pointWeight1 * 1.0f / tri.vertices[0].w + pointWeight2 * 1.0f / tri.vertices[1].w;
-
                     // Interpolate texture UV, previously perspective divided
                     // Divide by inverse Z to correct perspective based on depth
-                    float u = (pointWeight0 * tri.vertices[2].u + pointWeight1 * tri.vertices[0].u + pointWeight2 * tri.vertices[1].u) / inverseZ;
-                    float v = (pointWeight0 * tri.vertices[2].v + pointWeight1 * tri.vertices[0].v + pointWeight2 * tri.vertices[1].v) / inverseZ;
+                    float u = (pointWeight0 * tri.vertices[2].u + pointWeight1 * tri.vertices[0].u + pointWeight2 * tri.vertices[1].u) / depth;
+                    float v = (pointWeight0 * tri.vertices[2].v + pointWeight1 * tri.vertices[0].v + pointWeight2 * tri.vertices[1].v) / depth;
 
                     // Sample texture at UV
                     colour = sampleFromTexture(texture, u, v);
@@ -350,6 +351,11 @@ void brn::BrnRenderer::updateScreen()
     window.draw(sprite);
 
     window.display();
+}
+
+void brn::BrnRenderer::toggleWireframeRender()
+{
+    wireframeRender = !wireframeRender;
 }
 
 bool brn::BrnRenderer::windowOpen()

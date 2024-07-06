@@ -39,6 +39,8 @@ public:
     void clearScreen(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
     void updateScreen();
 
+    void toggleWireframeRender();
+
     bool windowOpen();
 
     void setWindowTitle(const std::string& title);
@@ -63,9 +65,11 @@ private:
     int screenWidth, screenHeight, screenRenderScale;
 
     sf::Uint8* pixelBuffer;
-    float* depthBuffer;
+    double* depthBuffer;
 
     static const std::array<brn::Plane, 6> clippingPlanes;
+
+    bool wireframeRender;
 
     Vector3 cameraPosition;
     Vector3 cameraRotation;

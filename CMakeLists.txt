@@ -10,7 +10,13 @@ FetchContent_Declare(SFML
     GIT_TAG 2.6.x)
 FetchContent_MakeAvailable(SFML)
 
+FetchContent_Declare(rapidobj
+    GIT_REPOSITORY https://github.com/guybrush77/rapidobj.git
+    GIT_TAG v1.1)
+FetchContent_MakeAvailable(rapidobj)
+
 include_directories(include/)
+include_directories(${rapidobj_SOURCE_DIR}/include)
 
 file(GLOB_RECURSE SRC_FILES src/*.cpp)
 
