@@ -34,21 +34,16 @@ brn::BrnRenderer::BrnRenderer(unsigned int screenWidth, unsigned int screenHeigh
 
 void brn::BrnRenderer::clearPixelBuffer(uint8_t r, uint8_t g, uint8_t b)
 {
-    for (int i = 0; i < screenWidth * screenHeight * 4; i += 4)
-    {
-        pixelBuffer[i] = r;
-        pixelBuffer[i + 1] = g;
-        pixelBuffer[i + 2] = b;
-        pixelBuffer[i + 3] = 255;
-    }
+    // Store RGB values and 255 alpha value in a 32 bit integer
+    uint32_t colour = r | (g << 8) | (b << 16) | (255 << 24);
+    // Cast to 32 bit in order to fill with 32 bit integer colour values
+    uint32_t* pixelBuffer32 = reinterpret_cast<uint32_t*>(pixelBuffer);
+    std::fill(pixelBuffer32, pixelBuffer32 + screenWidth * screenHeight, colour);
 }
 
 void brn::BrnRenderer::clearDepthBuffer()
 {
-    for (int i = 0; i < screenWidth * screenHeight; i++)
-    {
-        depthBuffer[i] = -INFINITY;
-    }
+    std::fill(depthBuffer, depthBuffer + screenWidth * screenHeight, -INFINITY);
 }
 
 void brn::BrnRenderer::drawMesh(const Mesh& mesh, const Vector3& position, const Vector3& rotation, const Vector3& scale, sf::Image* texture)
@@ -311,7 +306,7 @@ bool brn::BrnRenderer::isTriangleTopOrLeftEdge(const Vector2& v1, const Vector2&
 brn::Colour brn::BrnRenderer::sampleFromTexture(sf::Image* texture, float u, float v)
 {
     sf::Vector2u textureSize = texture->getSize();
-    sf::Color colour = texture->getPixel((int)floor(textureSize.x * u) % textureSize.x, (int)floor(textureSize.y * v) % textureSize.y);
+    sf::Color colour = texture->getPixel((int)(textureSize.x * u) % textureSize.x, (int)(textureSize.y * v) % textureSize.y);
     return {colour.r, colour.g, colour.b};
 }
 
