@@ -14,6 +14,7 @@ A software renderer written in C++
  - Colour blending
  - Perspective correct texture mapping
  - Directional lighting
+ - Depth buffer
  - OBJ loading support with material and texture mapping
 
 ### Libraries used
